@@ -4,11 +4,9 @@ local OrionLib = {}
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
 -- Variablen
 local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
 
 OrionLib.Theme = {
     Background = Color3.fromRGB(20, 20, 30),
@@ -51,30 +49,6 @@ local function Create(class, props)
     return obj
 end
 
-local function RippleEffect(button)
-    local ripple = Create("Frame", {
-        Parent = button,
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 0.7,
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        ZIndex = 10
-    })
-    
-    local corner = Create("UICorner", {
-        Parent = ripple,
-        CornerRadius = UDim.new(1, 0)
-    })
-    
-    TweenService:Create(ripple, TweenInfo.new(0.5), {
-        Size = UDim2.new(2, 0, 2, 0),
-        BackgroundTransparency = 1
-    }):Play()
-    
-    game.Debris:AddItem(ripple, 0.5)
-end
-
 -- Main Window Funktion
 function OrionLib:MakeWindow(config)
     config = config or {}
@@ -87,9 +61,7 @@ function OrionLib:MakeWindow(config)
         BorderSizePixel = 0,
         Position = UDim2.new(0.5, -300, 0.5, -200),
         Size = UDim2.new(0, 600, 0, 400),
-        ClipsDescendants = true,
-        Active = true,
-        Selectable = true
+        ClipsDescendants = true
     })
     
     Create("UICorner", {
@@ -111,11 +83,6 @@ function OrionLib:MakeWindow(config)
         Size = UDim2.new(1, 0, 0, 40)
     })
     
-    Create("UICorner", {
-        Parent = TopBar,
-        CornerRadius = UDim.new(0, 8)
-    })
-    
     local Title = Create("TextLabel", {
         Parent = TopBar,
         Text = config.Name,
@@ -131,9 +98,9 @@ function OrionLib:MakeWindow(config)
     -- Close Button
     local CloseButton = Create("TextButton", {
         Parent = TopBar,
-        Text = "×",
+        Text = "X",
         TextColor3 = OrionLib.Theme.Text,
-        TextSize = 24,
+        TextSize = 18,
         Font = Enum.Font.GothamBold,
         BackgroundColor3 = OrionLib.Theme.Tertiary,
         BorderSizePixel = 0,
@@ -144,13 +111,7 @@ function OrionLib:MakeWindow(config)
     
     Create("UICorner", {
         Parent = CloseButton,
-        CornerRadius = UDim.new(1, 0)
-    })
-    
-    Create("UIStroke", {
-        Parent = CloseButton,
-        Color = OrionLib.Theme.Accent,
-        Thickness = 1
+        CornerRadius = UDim.new(0, 6)
     })
     
     -- Minimize Button
@@ -169,13 +130,7 @@ function OrionLib:MakeWindow(config)
     
     Create("UICorner", {
         Parent = MinimizeButton,
-        CornerRadius = UDim.new(1, 0)
-    })
-    
-    Create("UIStroke", {
-        Parent = MinimizeButton,
-        Color = OrionLib.Theme.Accent,
-        Thickness = 1
+        CornerRadius = UDim.new(0, 6)
     })
     
     -- Sidebar
@@ -214,7 +169,7 @@ function OrionLib:MakeWindow(config)
     local ContentList = Create("UIListLayout", {
         Parent = ContentArea,
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 10)
+        Padding = UDim.new(0, 8)
     })
     
     -- User Info
@@ -229,12 +184,6 @@ function OrionLib:MakeWindow(config)
     Create("UICorner", {
         Parent = UserFrame,
         CornerRadius = UDim.new(0, 6)
-    })
-    
-    Create("UIStroke", {
-        Parent = UserFrame,
-        Color = OrionLib.Theme.Accent,
-        Thickness = 1
     })
     
     local Username = Create("TextLabel", {
@@ -291,13 +240,9 @@ function OrionLib:MakeWindow(config)
     MinimizeButton.MouseButton1Click:Connect(function()
         minimized = not minimized
         if minimized then
-            TweenService:Create(MainWindow, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 600, 0, 40)
-            }):Play()
+            MainWindow.Size = UDim2.new(0, 600, 0, 40)
         else
-            TweenService:Create(MainWindow, TweenInfo.new(0.3), {
-                Size = UDim2.new(0, 600, 0, 400)
-            }):Play()
+            MainWindow.Size = UDim2.new(0, 600, 0, 400)
         end
     end)
     
@@ -324,12 +269,6 @@ function OrionLib:MakeWindow(config)
             CornerRadius = UDim.new(0, 6)
         })
         
-        Create("UIStroke", {
-            Parent = TabButton,
-            Color = OrionLib.Theme.Accent,
-            Thickness = 1
-        })
-        
         local TabText = Create("TextLabel", {
             Parent = TabButton,
             Text = tabName,
@@ -337,9 +276,9 @@ function OrionLib:MakeWindow(config)
             TextSize = 14,
             Font = Enum.Font.GothamSemibold,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, -10, 1, 0),
-            Position = UDim2.new(0, 10, 0, 0),
-            TextXAlignment = Enum.TextXAlignment.Left
+            Size = UDim2.new(1, 0, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Center
         })
         
         local TabContent = Create("Frame", {
@@ -353,53 +292,23 @@ function OrionLib:MakeWindow(config)
         local ContentListLayout = Create("UIListLayout", {
             Parent = TabContent,
             SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 10)
+            Padding = UDim.new(0, 8)
         })
-        
-        -- Hover Effects
-        TabButton.MouseEnter:Connect(function()
-            if CurrentTab ~= TabButton then
-                TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Color3.fromRGB(
-                        OrionLib.Theme.Secondary.R * 255 + 10,
-                        OrionLib.Theme.Secondary.G * 255 + 10,
-                        OrionLib.Theme.Secondary.B * 255 + 10
-                    )
-                }):Play()
-            end
-        end)
-        
-        TabButton.MouseLeave:Connect(function()
-            if CurrentTab ~= TabButton then
-                TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                    BackgroundColor3 = OrionLib.Theme.Secondary
-                }):Play()
-            end
-        end)
         
         -- Click Event
         TabButton.MouseButton1Click:Connect(function()
             -- Deaktiviere vorherigen Tab
             if CurrentTab then
-                TweenService:Create(CurrentTab.Button, TweenInfo.new(0.2), {
-                    BackgroundColor3 = OrionLib.Theme.Secondary
-                }):Play()
-                TweenService:Create(CurrentTab.Button.TextLabel, TweenInfo.new(0.2), {
-                    TextColor3 = OrionLib.Theme.TextSecondary
-                }):Play()
+                CurrentTab.Button.BackgroundColor3 = OrionLib.Theme.Secondary
+                CurrentTab.Text.TextColor3 = OrionLib.Theme.TextSecondary
                 CurrentTab.Content.Visible = false
             end
             
             -- Aktiviere neuen Tab
             CurrentTab = Tabs[tabName]
-            TweenService:Create(TabButton, TweenInfo.new(0.2), {
-                BackgroundColor3 = OrionLib.Theme.Accent
-            }):Play()
-            TweenService:Create(TabText, TweenInfo.new(0.2), {
-                TextColor3 = Color3.fromRGB(255, 255, 255)
-            }):Play()
+            TabButton.BackgroundColor3 = OrionLib.Theme.Accent
+            TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
             TabContent.Visible = true
-            RippleEffect(TabButton)
         end)
         
         -- Speichere Tab
@@ -439,12 +348,6 @@ function OrionLib:MakeWindow(config)
                 CornerRadius = UDim.new(0, 6)
             })
             
-            Create("UIStroke", {
-                Parent = Button,
-                Color = OrionLib.Theme.Accent,
-                Thickness = 1
-            })
-            
             local ButtonText = Create("TextLabel", {
                 Parent = Button,
                 Text = btnConfig.Name,
@@ -457,26 +360,8 @@ function OrionLib:MakeWindow(config)
                 TextXAlignment = Enum.TextXAlignment.Center
             })
             
-            -- Hover Effects
-            Button.MouseEnter:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Color3.fromRGB(
-                        OrionLib.Theme.Tertiary.R * 255 + 15,
-                        OrionLib.Theme.Tertiary.G * 255 + 15,
-                        OrionLib.Theme.Tertiary.B * 255 + 15
-                    )
-                }):Play()
-            end)
-            
-            Button.MouseLeave:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.2), {
-                    BackgroundColor3 = OrionLib.Theme.Tertiary
-                }):Play()
-            end)
-            
             -- Click Event
             Button.MouseButton1Click:Connect(function()
-                RippleEffect(Button)
                 btnConfig.Callback()
             end)
             
@@ -512,12 +397,6 @@ function OrionLib:MakeWindow(config)
                 CornerRadius = UDim.new(0, 6)
             })
             
-            Create("UIStroke", {
-                Parent = ToggleFrame,
-                Color = OrionLib.Theme.Accent,
-                Thickness = 1
-            })
-            
             local ToggleText = Create("TextLabel", {
                 Parent = ToggleFrame,
                 Text = toggleConfig.Name,
@@ -541,63 +420,33 @@ function OrionLib:MakeWindow(config)
             
             Create("UICorner", {
                 Parent = ToggleIndicator,
-                CornerRadius = UDim.new(1, 0)
-            })
-            
-            Create("UIStroke", {
-                Parent = ToggleIndicator,
-                Color = OrionLib.Theme.Accent,
-                Thickness = 1
+                CornerRadius = UDim.new(0, 6)
             })
             
             local ToggleDot = Create("Frame", {
                 Parent = ToggleIndicator,
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 BorderSizePixel = 0,
-                Position = Toggle.Value and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0),
-                Size = UDim2.new(0, 18, 0, 18),
+                Position = Toggle.Value and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                Size = UDim2.new(0, 14, 0, 14),
                 AnchorPoint = Vector2.new(0.5, 0.5)
             })
             
             Create("UICorner", {
                 Parent = ToggleDot,
-                CornerRadius = UDim.new(1, 0)
+                CornerRadius = UDim.new(0, 6)
             })
             
             function Toggle:Set(value)
                 self.Value = value
-                TweenService:Create(ToggleIndicator, TweenInfo.new(0.2), {
-                    BackgroundColor3 = value and OrionLib.Theme.Accent or OrionLib.Theme.Border
-                }):Play()
-                
-                TweenService:Create(ToggleDot, TweenInfo.new(0.2), {
-                    Position = value and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
-                }):Play()
-                
+                ToggleIndicator.BackgroundColor3 = value and OrionLib.Theme.Accent or OrionLib.Theme.Border
+                ToggleDot.Position = value and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
                 toggleConfig.Callback(value)
             end
             
             -- Click Event
             ToggleFrame.MouseButton1Click:Connect(function()
                 Toggle:Set(not Toggle.Value)
-                RippleEffect(ToggleFrame)
-            end)
-            
-            -- Hover Effects
-            ToggleFrame.MouseEnter:Connect(function()
-                TweenService:Create(ToggleFrame, TweenInfo.new(0.2), {
-                    BackgroundColor3 = Color3.fromRGB(
-                        OrionLib.Theme.Tertiary.R * 255 + 10,
-                        OrionLib.Theme.Tertiary.G * 255 + 10,
-                        OrionLib.Theme.Tertiary.B * 255 + 10
-                    )
-                }):Play()
-            end)
-            
-            ToggleFrame.MouseLeave:Connect(function()
-                TweenService:Create(ToggleFrame, TweenInfo.new(0.2), {
-                    BackgroundColor3 = OrionLib.Theme.Tertiary
-                }):Play()
             end)
             
             -- Set initial value
@@ -635,12 +484,6 @@ function OrionLib:MakeWindow(config)
                 CornerRadius = UDim.new(0, 6)
             })
             
-            Create("UIStroke", {
-                Parent = SliderFrame,
-                Color = OrionLib.Theme.Accent,
-                Thickness = 1
-            })
-            
             local SliderText = Create("TextLabel", {
                 Parent = SliderFrame,
                 Text = sliderConfig.Name,
@@ -670,7 +513,7 @@ function OrionLib:MakeWindow(config)
                 BackgroundColor3 = OrionLib.Theme.Border,
                 BorderSizePixel = 0,
                 Position = UDim2.new(0, 10, 0, 35),
-                Size = UDim2.new(1, -20, 0, 8)
+                Size = UDim2.new(1, -20, 0, 6)
             })
             
             Create("UICorner", {
@@ -695,7 +538,7 @@ function OrionLib:MakeWindow(config)
                 Text = "",
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 BorderSizePixel = 0,
-                Position = UDim2.new((Slider.Value - sliderConfig.Min) / (sliderConfig.Max - sliderConfig.Min), -8, 0.5, -8),
+                Position = UDim2.new((Slider.Value - sliderConfig.Min) / (sliderConfig.Max - sliderConfig.Min), -8, 0.5, 0),
                 Size = UDim2.new(0, 16, 0, 16),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 AutoButtonColor = false
@@ -706,26 +549,14 @@ function OrionLib:MakeWindow(config)
                 CornerRadius = UDim.new(1, 0)
             })
             
-            Create("UIStroke", {
-                Parent = SliderButton,
-                Color = OrionLib.Theme.Accent,
-                Thickness = 2
-            })
-            
             function Slider:Set(value)
                 value = math.clamp(value, sliderConfig.Min, sliderConfig.Max)
                 self.Value = value
                 
                 local percent = (value - sliderConfig.Min) / (sliderConfig.Max - sliderConfig.Min)
                 
-                TweenService:Create(SliderFill, TweenInfo.new(0.1), {
-                    Size = UDim2.new(percent, 0, 1, 0)
-                }):Play()
-                
-                TweenService:Create(SliderButton, TweenInfo.new(0.1), {
-                    Position = UDim2.new(percent, -8, 0.5, -8)
-                }):Play()
-                
+                SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                SliderButton.Position = UDim2.new(percent, -8, 0.5, 0)
                 ValueText.Text = tostring(math.floor(value))
                 sliderConfig.Callback(value)
             end
@@ -792,8 +623,7 @@ function OrionLib:MakeWindow(config)
                 Font = Enum.Font.Gotham,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, 25),
-                TextXAlignment = Enum.TextXAlignment.Left,
-                TextWrapped = true
+                TextXAlignment = Enum.TextXAlignment.Left
             })
             
             local LabelFunctions = {}
@@ -803,6 +633,221 @@ function OrionLib:MakeWindow(config)
             end
             
             return LabelFunctions
+        end
+        
+        function TabFunctions:AddDropdown(dropdownConfig)
+            dropdownConfig = dropdownConfig or {}
+            dropdownConfig.Name = dropdownConfig.Name or "Dropdown"
+            dropdownConfig.Options = dropdownConfig.Options or {"Option 1", "Option 2"}
+            dropdownConfig.Default = dropdownConfig.Default or dropdownConfig.Options[1]
+            dropdownConfig.Callback = dropdownConfig.Callback or function() end
+            dropdownConfig.Flag = dropdownConfig.Flag or nil
+            
+            local Dropdown = {
+                Value = dropdownConfig.Default,
+                Options = dropdownConfig.Options,
+                Opened = false
+            }
+            
+            local DropdownFrame = Create("Frame", {
+                Parent = TabContent,
+                BackgroundColor3 = OrionLib.Theme.Tertiary,
+                BorderSizePixel = 0,
+                Size = UDim2.new(1, 0, 0, 35),
+                ClipsDescendants = true
+            })
+            
+            Create("UICorner", {
+                Parent = DropdownFrame,
+                CornerRadius = UDim.new(0, 6)
+            })
+            
+            local DropdownButton = Create("TextButton", {
+                Parent = DropdownFrame,
+                Text = "",
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Size = UDim2.new(1, 0, 0, 35),
+                AutoButtonColor = false
+            })
+            
+            local DropdownText = Create("TextLabel", {
+                Parent = DropdownButton,
+                Text = dropdownConfig.Name,
+                TextColor3 = OrionLib.Theme.Text,
+                TextSize = 14,
+                Font = Enum.Font.GothamSemibold,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 10, 0, 0),
+                Size = UDim2.new(0.7, -10, 1, 0),
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local SelectedText = Create("TextLabel", {
+                Parent = DropdownButton,
+                Text = Dropdown.Value,
+                TextColor3 = OrionLib.Theme.Accent,
+                TextSize = 13,
+                Font = Enum.Font.GothamBold,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.7, 0, 0, 0),
+                Size = UDim2.new(0.3, -30, 1, 0),
+                TextXAlignment = Enum.TextXAlignment.Right
+            })
+            
+            local Arrow = Create("TextLabel", {
+                Parent = DropdownButton,
+                Text = "▼",
+                TextColor3 = OrionLib.Theme.Accent,
+                TextSize = 12,
+                Font = Enum.Font.GothamBold,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(1, -20, 0.5, -6),
+                Size = UDim2.new(0, 16, 0, 12),
+                AnchorPoint = Vector2.new(1, 0.5)
+            })
+            
+            local OptionsFrame = Create("Frame", {
+                Parent = DropdownFrame,
+                BackgroundColor3 = OrionLib.Theme.Secondary,
+                BorderSizePixel = 0,
+                Position = UDim2.new(0, 5, 0, 40),
+                Size = UDim2.new(1, -10, 0, 0),
+                ClipsDescendants = true
+            })
+            
+            Create("UICorner", {
+                Parent = OptionsFrame,
+                CornerRadius = UDim.new(0, 6)
+            })
+            
+            local OptionsList = Create("Frame", {
+                Parent = OptionsFrame,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Size = UDim2.new(1, 0, 1, 0)
+            })
+            
+            local OptionsListLayout = Create("UIListLayout", {
+                Parent = OptionsList,
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 2)
+            })
+            
+            function Dropdown:Set(value)
+                if table.find(dropdownConfig.Options, value) then
+                    self.Value = value
+                    SelectedText.Text = value
+                    dropdownConfig.Callback(value)
+                end
+            end
+            
+            function Dropdown:Refresh(options)
+                dropdownConfig.Options = options or dropdownConfig.Options
+                self.Options = dropdownConfig.Options
+                
+                -- Clear old options
+                for _, child in pairs(OptionsList:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        child:Destroy()
+                    end
+                end
+                
+                -- Add new options
+                for _, option in pairs(dropdownConfig.Options) do
+                    local OptionButton = Create("TextButton", {
+                        Parent = OptionsList,
+                        Text = option,
+                        TextColor3 = OrionLib.Theme.Text,
+                        TextSize = 13,
+                        Font = Enum.Font.Gotham,
+                        BackgroundColor3 = OrionLib.Theme.Tertiary,
+                        BorderSizePixel = 0,
+                        Size = UDim2.new(1, 0, 0, 30),
+                        AutoButtonColor = false
+                    })
+                    
+                    Create("UICorner", {
+                        Parent = OptionButton,
+                        CornerRadius = UDim.new(0, 4)
+                    })
+                    
+                    OptionButton.MouseButton1Click:Connect(function()
+                        Dropdown:Set(option)
+                        Dropdown:Toggle()
+                    end)
+                end
+            end
+            
+            function Dropdown:Toggle()
+                self.Opened = not self.Opened
+                
+                if self.Opened then
+                    local totalHeight = math.min(#dropdownConfig.Options * 32 + 10, 150)
+                    DropdownFrame.Size = UDim2.new(1, 0, 0, 35 + totalHeight + 5)
+                    OptionsFrame.Size = UDim2.new(1, -10, 0, totalHeight)
+                    Arrow.Text = "▲"
+                else
+                    DropdownFrame.Size = UDim2.new(1, 0, 0, 35)
+                    OptionsFrame.Size = UDim2.new(1, -10, 0, 0)
+                    Arrow.Text = "▼"
+                end
+            end
+            
+            -- Click Event
+            DropdownButton.MouseButton1Click:Connect(function()
+                Dropdown:Toggle()
+            end)
+            
+            -- Initial setup
+            Dropdown:Refresh(dropdownConfig.Options)
+            Dropdown:Set(Dropdown.Value)
+            
+            -- Save to flags
+            if dropdownConfig.Flag then
+                OrionLib.Flags[dropdownConfig.Flag] = Dropdown
+            end
+            
+            return Dropdown
+        end
+        
+        function TabFunctions:AddTextbox(textboxConfig)
+            textboxConfig = textboxConfig or {}
+            textboxConfig.Name = textboxConfig.Name or "Textbox"
+            textboxConfig.Placeholder = textboxConfig.Placeholder or "Enter text..."
+            textboxConfig.Callback = textboxConfig.Callback or function() end
+            
+            local TextboxFrame = Create("Frame", {
+                Parent = TabContent,
+                BackgroundColor3 = OrionLib.Theme.Tertiary,
+                BorderSizePixel = 0,
+                Size = UDim2.new(1, 0, 0, 35)
+            })
+            
+            Create("UICorner", {
+                Parent = TextboxFrame,
+                CornerRadius = UDim.new(0, 6)
+            })
+            
+            local Textbox = Create("TextBox", {
+                Parent = TextboxFrame,
+                Text = "",
+                PlaceholderText = textboxConfig.Placeholder,
+                TextColor3 = OrionLib.Theme.Text,
+                PlaceholderColor3 = OrionLib.Theme.TextSecondary,
+                TextSize = 14,
+                Font = Enum.Font.Gotham,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 10, 0, 0),
+                Size = UDim2.new(1, -20, 1, 0),
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            Textbox.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    textboxConfig.Callback(Textbox.Text)
+                end
+            end)
         end
         
         return TabFunctions
@@ -821,18 +866,14 @@ function OrionLib:MakeWindow(config)
         MainWindow:Destroy()
     end
     
-    -- Update Content Area size automatically
-    ContentArea.ChildAdded:Connect(function(child)
-        wait()
-        if child:IsA("Frame") then
-            local totalHeight = 0
-            for _, element in pairs(child:GetChildren()) do
-                if element:IsA("Frame") or element:IsA("TextButton") or element:IsA("TextLabel") then
-                    totalHeight = totalHeight + element.Size.Y.Offset + 10
-                end
-            end
-            child.Size = UDim2.new(1, 0, 0, totalHeight)
-        end
+    -- Notification beim Öffnen
+    spawn(function()
+        wait(0.5)
+        OrionLib:MakeNotification({
+            Name = config.Name,
+            Content = "UI loaded successfully!",
+            Time = 3
+        })
     end)
     
     return WindowFunctions
@@ -851,8 +892,7 @@ function OrionLib:MakeNotification(notificationConfig)
         BorderSizePixel = 0,
         Position = UDim2.new(1, 10, 1, -50),
         Size = UDim2.new(0, 300, 0, 0),
-        AnchorPoint = Vector2.new(1, 1),
-        ClipsDescendants = true
+        AnchorPoint = Vector2.new(1, 1)
     })
     
     Create("UICorner", {
@@ -863,7 +903,7 @@ function OrionLib:MakeNotification(notificationConfig)
     Create("UIStroke", {
         Parent = Notification,
         Color = OrionLib.Theme.Accent,
-        Thickness = 2
+        Thickness = 1
     })
     
     local Title = Create("TextLabel", {
@@ -886,42 +926,23 @@ function OrionLib:MakeNotification(notificationConfig)
         Font = Enum.Font.Gotham,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 15, 0, 35),
-        Size = UDim2.new(1, -30, 0, 0),
+        Size = UDim2.new(1, -30, 0, 50),
         TextXAlignment = Enum.TextXAlignment.Left,
-        TextWrapped = true,
-        AutomaticSize = Enum.AutomaticSize.Y
+        TextWrapped = true
     })
     
-    -- Calculate height
-    Content:GetPropertyChangedSignal("TextBounds"):Wait()
-    local textHeight = Content.TextBounds.Y
-    local totalHeight = math.max(70, 55 + textHeight)
-    
     -- Animate in
-    TweenService:Create(Notification, TweenInfo.new(0.3), {
-        Size = UDim2.new(0, 300, 0, totalHeight),
-        Position = UDim2.new(1, -10, 1, -(totalHeight + 10))
-    }):Play()
+    Notification.Size = UDim2.new(0, 300, 0, 100)
+    Notification.Position = UDim2.new(1, -10, 1, -110)
     
-    -- Wait and animate out
+    -- Wait and destroy
     wait(notificationConfig.Time)
-    
-    TweenService:Create(Notification, TweenInfo.new(0.3), {
-        Size = UDim2.new(0, 300, 0, 0),
-        Position = UDim2.new(1, 10, 1, -50)
-    }):Play()
-    
-    wait(0.3)
     Notification:Destroy()
 end
 
 -- Init function
 function OrionLib:Init()
-    self:MakeNotification({
-        Name = "Orion Lib",
-        Content = "Library loaded successfully!",
-        Time = 3
-    })
+    -- Nothing needed here
 end
 
 -- Destroy function
