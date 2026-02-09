@@ -1,3 +1,9 @@
+--[[
+Orion Library - Clean UI
+Author: ljjdwawdwd
+GitHub: https://github.com/ljjdwawdwd/Mdoiy
+]]
+
 local OrionLib = {}
 
 -- Services
