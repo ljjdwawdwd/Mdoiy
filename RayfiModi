@@ -188,8 +188,94 @@ end
 -- Initialize UI
 local Rayfield
 if useStudio then
-	Rayfield = script.Parent:FindFirstChild('Rayfield') or Instance.new("ScreenGui")
+	-- Create a basic UI structure for Studio testing
+	Rayfield = Instance.new("ScreenGui")
+	Rayfield.Name = "RayfieldPink"
+	Rayfield.DisplayOrder = 999
+	
+	Main = Instance.new("Frame")
+	Main.Name = "Main"
+	Main.Size = UDim2.new(0, 500, 0, 400)
+	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Main.AnchorPoint = Vector2.new(0.5, 0.5)
+	Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+	Main.BorderSizePixel = 0
+	Main.Parent = Rayfield
+	
+	-- Create basic UI elements for testing
+	Topbar = Instance.new("Frame")
+	Topbar.Name = "Topbar"
+	Topbar.Size = UDim2.new(1, 0, 0, 40)
+	Topbar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	Topbar.BorderSizePixel = 0
+	Topbar.Parent = Main
+	
+	local Title = Instance.new("TextLabel")
+	Title.Name = "Title"
+	Title.Text = "Rayfield Pink"
+	Title.Size = UDim2.new(0, 200, 1, 0)
+	Title.Position = UDim2.new(0, 10, 0, 0)
+	Title.BackgroundTransparency = 1
+	Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.Font = Enum.Font.GothamSemibold
+	Title.TextSize = 16
+	Title.Parent = Topbar
+	
+	-- Create TabList and Elements
+	TabList = Instance.new("Frame")
+	TabList.Name = "TabList"
+	TabList.Size = UDim2.new(0, 150, 1, -40)
+	TabList.Position = UDim2.new(0, 0, 0, 40)
+	TabList.BackgroundTransparency = 1
+	TabList.Parent = Main
+	
+	Elements = Instance.new("Frame")
+	Elements.Name = "Elements"
+	Elements.Size = UDim2.new(1, -150, 1, -40)
+	Elements.Position = UDim2.new(0, 150, 0, 40)
+	Elements.BackgroundTransparency = 1
+	Elements.Parent = Main
+	
+	-- Create templates
+	local Template = Instance.new("Frame")
+	Template.Name = "Template"
+	Template.Visible = false
+	Template.Parent = TabList
+	
+	local ButtonTemplate = Instance.new("Frame")
+	ButtonTemplate.Name = "Button"
+	ButtonTemplate.Size = UDim2.new(1, -20, 0, 40)
+	ButtonTemplate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	ButtonTemplate.BorderSizePixel = 0
+	ButtonTemplate.Parent = Instance.new("Frame")
+	ButtonTemplate.Parent.Name = "Template"
+	ButtonTemplate.Parent.Visible = false
+	ButtonTemplate.Parent.Parent = Elements
+	
+	-- Create Notifications
+	Notifications = Instance.new("Frame")
+	Notifications.Name = "Notifications"
+	Notifications.Size = UDim2.new(0, 300, 1, 0)
+	Notifications.Position = UDim2.new(1, 10, 0, 0)
+	Notifications.BackgroundTransparency = 1
+	Notifications.Parent = Rayfield
+	
+	local NotificationTemplate = Instance.new("Frame")
+	NotificationTemplate.Name = "Template"
+	NotificationTemplate.Size = UDim2.new(1, 0, 0, 80)
+	NotificationTemplate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	NotificationTemplate.Visible = false
+	NotificationTemplate.Parent = Notifications
+	
+	LoadingFrame = Instance.new("Frame")
+	LoadingFrame.Name = "LoadingFrame"
+	LoadingFrame.Size = UDim2.new(1, 0, 1, 0)
+	LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+	LoadingFrame.Visible = true
+	LoadingFrame.Parent = Main
 else
+	-- Load actual Rayfield UI
 	Rayfield = game:GetObjects("rbxassetid://10804731440")[1]
 end
 
@@ -209,18 +295,18 @@ end
 
 -- Clean up old interfaces
 for _, gui in pairs(CoreGui:GetChildren()) do
-	if gui.Name == "Rayfield" or gui.Name == "RayfieldPink" and gui ~= Rayfield then
+	if (gui.Name == "Rayfield" or gui.Name == "RayfieldPink") and gui ~= Rayfield then
 		gui:Destroy()
 	end
 end
 
--- Main Components
+-- Get main components (now they should exist)
 local Main = Rayfield:WaitForChild("Main")
-local Topbar = Main.Topbar
-local Elements = Main.Elements
-local TabList = Main.TabList
-local LoadingFrame = Main.LoadingFrame
-local Notifications = Rayfield.Notifications
+local Topbar = Main:WaitForChild("Topbar")
+local Elements = Main:WaitForChild("Elements")
+local TabList = Main:WaitForChild("TabList")
+local LoadingFrame = Main:WaitForChild("LoadingFrame")
+local Notifications = Rayfield:WaitForChild("Notifications")
 
 -- Apply Initial Theme
 local function applyTheme(themeName)
@@ -233,24 +319,31 @@ local function applyTheme(themeName)
 	-- Apply to main components
 	Main.BackgroundColor3 = theme.Background
 	Topbar.BackgroundColor3 = theme.Topbar
-	Topbar.CornerRepair.BackgroundColor3 = theme.Topbar
 	
-	-- Update all text
+	-- Safely update text elements
 	for _, element in pairs(Rayfield:GetDescendants()) do
 		if element:IsA("TextLabel") or element:IsA("TextBox") then
-			if element.Name == "Title" or element.Name == "Content" then
-				element.TextColor3 = theme.Text
-			else
-				element.TextColor3 = theme.TextSecondary
-			end
+			-- Check if element exists and has expected properties
+			pcall(function()
+				if element.Name == "Title" or element.Name == "Content" then
+					element.TextColor3 = theme.Text
+				else
+					element.TextColor3 = theme.TextSecondary
+				end
+			end)
 		end
 	end
 	
-	-- Update tab colors
+	-- Safely update tab colors
 	for _, tab in pairs(TabList:GetChildren()) do
-		if tab:IsA("Frame") and tab.Name ~= "Template" then
-			tab.BackgroundColor3 = theme.Card
-			tab.Title.TextColor3 = theme.TextSecondary
+		if tab:IsA("Frame") and tab.Name ~= "Template" and tab.Name ~= "Placeholder" then
+			pcall(function()
+				tab.BackgroundColor3 = theme.Card
+				-- Check if Title exists
+				if tab:FindFirstChild("Title") then
+					tab.Title.TextColor3 = theme.TextSecondary
+				end
+			end)
 		end
 	end
 	
@@ -261,56 +354,77 @@ end
 function RayfieldLibrary:Notify(notificationData)
 	task.spawn(function()
 		local theme = getTheme()
-		local template = Notifications.Template:Clone()
-		template.Name = "Notification_" .. tick()
-		template.Parent = Notifications
-		template.LayoutOrder = #Notifications:GetChildren()
-		template.Visible = true
 		
-		-- Setup notification
-		template.Title.Text = notificationData.Title or "Notification"
-		template.Description.Text = notificationData.Content or ""
-		template.BackgroundColor3 = theme.Card
-		template.UIStroke.Color = theme.Primary
+		-- Create notification frame
+		local notification = Instance.new("Frame")
+		notification.Name = "Notification_" .. tick()
+		notification.Size = UDim2.new(0, 300, 0, 80)
+		notification.Position = UDim2.new(1, 10, 0, 10)
+		notification.BackgroundColor3 = theme.Card
+		notification.BorderSizePixel = 0
+		notification.ClipsDescendants = true
 		
-		-- Set icon
-		if notificationData.Image then
-			if type(notificationData.Image) == "string" then
-				-- Try to load icon from Lucide
-				template.Icon.Image = notificationData.Image
-			elseif type(notificationData.Image) == "number" then
-				template.Icon.Image = "rbxassetid://" .. notificationData.Image
-			end
-		end
+		local UICorner = Instance.new("UICorner")
+		UICorner.CornerRadius = UDim.new(0, 8)
+		UICorner.Parent = notification
+		
+		local UIStroke = Instance.new("UIStroke")
+		UIStroke.Color = theme.Primary
+		UIStroke.Thickness = 2
+		UIStroke.Parent = notification
+		
+		local title = Instance.new("TextLabel")
+		title.Name = "Title"
+		title.Text = notificationData.Title or "Notification"
+		title.Size = UDim2.new(1, -20, 0, 30)
+		title.Position = UDim2.new(0, 10, 0, 10)
+		title.BackgroundTransparency = 1
+		title.TextColor3 = theme.Text
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.Font = Enum.Font.GothamSemibold
+		title.TextSize = 14
+		title.Parent = notification
+		
+		local content = Instance.new("TextLabel")
+		content.Name = "Content"
+		content.Text = notificationData.Content or ""
+		content.Size = UDim2.new(1, -20, 1, -50)
+		content.Position = UDim2.new(0, 10, 0, 40)
+		content.BackgroundTransparency = 1
+		content.TextColor3 = theme.TextSecondary
+		content.TextXAlignment = Enum.TextXAlignment.Left
+		content.TextYAlignment = Enum.TextYAlignment.Top
+		content.Font = Enum.Font.Gotham
+		content.TextSize = 12
+		content.TextWrapped = true
+		content.Parent = notification
+		
+		notification.Parent = Notifications
 		
 		-- Animation
-		template.Position = UDim2.new(1.5, 0, 0.05, 0)
-		template.Visible = true
-		
-		createTween(template, {
-			Position = UDim2.new(1, -20, 0.05, 0)
+		createTween(notification, {
+			Position = UDim2.new(1, -310, 0, 10)
 		}):Play()
 		
 		-- Auto remove
 		task.wait(notificationData.Duration or 5)
 		
-		createTween(template, {
-			Position = UDim2.new(1.5, 0, 0.05, 0),
+		createTween(notification, {
+			Position = UDim2.new(1, 10, 0, 10),
 			BackgroundTransparency = 1
 		}):Play()
 		
 		task.wait(0.5)
-		template:Destroy()
+		notification:Destroy()
 	end)
 end
 
 -- Window Creation
 function RayfieldLibrary:CreateWindow(settings)
 	-- Apply settings
-	Topbar.Title.Text = settings.Name or "Rayfield Pink"
-	LoadingFrame.Title.Text = settings.LoadingTitle or "Rayfield Pink"
-	LoadingFrame.Subtitle.Text = settings.LoadingSubtitle or "Modern UI Library"
-	LoadingFrame.Version.Text = Release
+	if Topbar:FindFirstChild("Title") then
+		Topbar.Title.Text = settings.Name or "Rayfield Pink"
+	end
 	
 	-- Apply theme
 	if settings.Theme and RayfieldLibrary.Themes[settings.Theme] then
@@ -322,14 +436,16 @@ function RayfieldLibrary:CreateWindow(settings)
 	-- Loading animation
 	Rayfield.Enabled = true
 	Main.Visible = true
-	LoadingFrame.Visible = true
 	
-	createTween(Main, {Size = UDim2.new(0, 500, 0, 400)}):Play()
+	if LoadingFrame then
+		LoadingFrame.Visible = true
+		createTween(Main, {Size = UDim2.new(0, 500, 0, 400)}):Play()
+		task.wait(1)
+		LoadingFrame.Visible = false
+	else
+		createTween(Main, {Size = UDim2.new(0, 500, 0, 400)}):Play()
+	end
 	
-	task.wait(1)
-	
-	-- Switch to main interface
-	LoadingFrame.Visible = false
 	Topbar.Visible = true
 	Elements.Visible = true
 	
@@ -339,36 +455,93 @@ function RayfieldLibrary:CreateWindow(settings)
 	
 	-- Tab Creation
 	function Window:CreateTab(name, icon)
-		local tabButton = TabList.Template:Clone()
+		-- Create tab button
+		local tabButton = Instance.new("Frame")
 		tabButton.Name = name
-		tabButton.Title.Text = name
-		tabButton.Parent = TabList
-		tabButton.Visible = true
+		tabButton.Size = UDim2.new(1, -10, 0, 40)
+		tabButton.BackgroundColor3 = getTheme().Card
+		tabButton.BorderSizePixel = 0
 		
-		if icon then
-			tabButton.Icon.Image = icon
-			tabButton.Icon.Visible = true
-		end
+		local UICorner = Instance.new("UICorner")
+		UICorner.CornerRadius = UDim.new(0, 6)
+		UICorner.Parent = tabButton
+		
+		local title = Instance.new("TextLabel")
+		title.Name = "Title"
+		title.Text = name
+		title.Size = UDim2.new(1, -20, 1, 0)
+		title.Position = UDim2.new(0, 10, 0, 0)
+		title.BackgroundTransparency = 1
+		title.TextColor3 = getTheme().TextSecondary
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.Font = Enum.Font.GothamSemibold
+		title.TextSize = 14
+		title.Parent = tabButton
+		
+		local interact = Instance.new("TextButton")
+		interact.Name = "Interact"
+		interact.Size = UDim2.new(1, 0, 1, 0)
+		interact.BackgroundTransparency = 1
+		interact.Text = ""
+		interact.Parent = tabButton
+		
+		tabButton.Parent = TabList
 		
 		-- Create tab page
-		local tabPage = Elements.Template:Clone()
+		local tabPage = Instance.new("ScrollingFrame")
 		tabPage.Name = name
+		tabPage.Size = UDim2.new(1, 0, 1, 0)
+		tabPage.BackgroundTransparency = 1
+		tabPage.ScrollBarThickness = 4
+		tabPage.ScrollBarImageColor3 = getTheme().Primary
+		tabPage.Visible = false
+		
+		local uiListLayout = Instance.new("UIListLayout")
+		uiListLayout.Padding = UDim.new(0, 10)
+		uiListLayout.Parent = tabPage
+		
 		tabPage.Parent = Elements
-		tabPage.Visible = true
 		
 		local Tab = {}
 		
 		-- Button Element
 		function Tab:CreateButton(buttonSettings)
-			local button = Elements.Template.Button:Clone()
+			local button = Instance.new("Frame")
 			button.Name = buttonSettings.Name
-			button.Title.Text = buttonSettings.Name
-			button.Parent = tabPage
-			button.Visible = true
+			button.Size = UDim2.new(1, -20, 0, 40)
+			button.BackgroundColor3 = getTheme().Card
+			button.BorderSizePixel = 0
 			
+			local UICorner = Instance.new("UICorner")
+			UICorner.CornerRadius = UDim.new(0, 6)
+			UICorner.Parent = button
+			
+			local title = Instance.new("TextLabel")
+			title.Name = "Title"
+			title.Text = buttonSettings.Name
+			title.Size = UDim2.new(1, -20, 1, 0)
+			title.Position = UDim2.new(0, 10, 0, 0)
+			title.BackgroundTransparency = 1
+			title.TextColor3 = getTheme().Text
+			title.TextXAlignment = Enum.TextXAlignment.Left
+			title.Font = Enum.Font.GothamSemibold
+			title.TextSize = 14
+			title.Parent = button
+			
+			local interact = Instance.new("TextButton")
+			interact.Name = "Interact"
+			interact.Size = UDim2.new(1, 0, 1, 0)
+			interact.BackgroundTransparency = 1
+			interact.Text = ""
+			interact.Parent = button
+			
+			button.Parent = tabPage
+			
+			-- Hover effect
 			applyHoverEffect(button, getTheme().Card, getTheme().CardHover)
 			
-			button.Interact.MouseButton1Click:Connect(function()
+			-- Click handler
+			interact.MouseButton1Click:Connect(function()
 				-- Press animation
 				createTween(button, {
 					BackgroundColor3 = getTheme().Primary,
@@ -391,7 +564,7 @@ function RayfieldLibrary:CreateWindow(settings)
 			
 			local buttonValue = {}
 			function buttonValue:Set(newText)
-				button.Title.Text = newText
+				title.Text = newText
 				button.Name = newText
 			end
 			
@@ -400,32 +573,94 @@ function RayfieldLibrary:CreateWindow(settings)
 		
 		-- Toggle Element
 		function Tab:CreateToggle(toggleSettings)
-			local toggle = Elements.Template.Toggle:Clone()
+			local toggle = Instance.new("Frame")
 			toggle.Name = toggleSettings.Name
-			toggle.Title.Text = toggleSettings.Name
+			toggle.Size = UDim2.new(1, -20, 0, 40)
+			toggle.BackgroundColor3 = getTheme().Card
+			toggle.BorderSizePixel = 0
+			
+			local UICorner = Instance.new("UICorner")
+			UICorner.CornerRadius = UDim.new(0, 6)
+			UICorner.Parent = toggle
+			
+			local title = Instance.new("TextLabel")
+			title.Name = "Title"
+			title.Text = toggleSettings.Name
+			title.Size = UDim2.new(1, -80, 1, 0)
+			title.Position = UDim2.new(0, 10, 0, 0)
+			title.BackgroundTransparency = 1
+			title.TextColor3 = getTheme().Text
+			title.TextXAlignment = Enum.TextXAlignment.Left
+			title.Font = Enum.Font.GothamSemibold
+			title.TextSize = 14
+			title.Parent = toggle
+			
+			local switch = Instance.new("Frame")
+			switch.Name = "Switch"
+			switch.Size = UDim2.new(0, 50, 0, 25)
+			switch.Position = UDim2.new(1, -60, 0.5, -12.5)
+			switch.BackgroundColor3 = getTheme().Medium
+			switch.BorderSizePixel = 0
+			
+			local switchCorner = Instance.new("UICorner")
+			switchCorner.CornerRadius = UDim.new(1, 0)
+			switchCorner.Parent = switch
+			
+			local indicator = Instance.new("Frame")
+			indicator.Name = "Indicator"
+			indicator.Size = UDim2.new(0, 20, 0, 20)
+			indicator.Position = UDim2.new(0, 3, 0.5, -10)
+			indicator.BackgroundColor3 = getTheme().TextSecondary
+			indicator.BorderSizePixel = 0
+			indicator.AnchorPoint = Vector2.new(0, 0.5)
+			
+			local indicatorCorner = Instance.new("UICorner")
+			indicatorCorner.CornerRadius = UDim.new(1, 0)
+			indicatorCorner.Parent = indicator
+			
+			indicator.Parent = switch
+			switch.Parent = toggle
+			
+			local interact = Instance.new("TextButton")
+			interact.Name = "Interact"
+			interact.Size = UDim2.new(1, 0, 1, 0)
+			interact.BackgroundTransparency = 1
+			interact.Text = ""
+			interact.Parent = toggle
+			
 			toggle.Parent = tabPage
-			toggle.Visible = true
 			
 			local isToggled = toggleSettings.CurrentValue or false
 			
 			-- Update toggle state
 			local function updateToggle()
 				if isToggled then
-					createTween(toggle.Switch.Indicator, {
-						Position = UDim2.new(1, -20, 0.5, 0),
+					createTween(indicator, {
+						Position = UDim2.new(1, -23, 0.5, -10),
 						BackgroundColor3 = getTheme().Primary
 					}):Play()
+					createTween(switch, {
+						BackgroundColor3 = Color3.fromRGB(
+							math.floor(getTheme().Primary.R * 255 * 0.3),
+							math.floor(getTheme().Primary.G * 255 * 0.3),
+							math.floor(getTheme().Primary.B * 255 * 0.3)
+						)
+					}):Play()
 				else
-					createTween(toggle.Switch.Indicator, {
-						Position = UDim2.new(0, 5, 0.5, 0),
+					createTween(indicator, {
+						Position = UDim2.new(0, 3, 0.5, -10),
 						BackgroundColor3 = getTheme().TextSecondary
+					}):Play()
+					createTween(switch, {
+						BackgroundColor3 = getTheme().Medium
 					}):Play()
 				end
 			end
 			
 			updateToggle()
 			
-			toggle.Interact.MouseButton1Click:Connect(function()
+			-- Click handler
+			interact.MouseButton1Click:Connect(function()
 				isToggled = not isToggled
 				updateToggle()
 				
@@ -438,6 +673,7 @@ function RayfieldLibrary:CreateWindow(settings)
 				end
 			end)
 			
+			-- Hover effect
 			applyHoverEffect(toggle, getTheme().Card, getTheme().CardHover)
 			
 			local toggleValue = {}
@@ -453,266 +689,51 @@ function RayfieldLibrary:CreateWindow(settings)
 			return toggleValue
 		end
 		
-		-- Slider Element
-		function Tab:CreateSlider(sliderSettings)
-			local slider = Elements.Template.Slider:Clone()
-			slider.Name = sliderSettings.Name
-			slider.Title.Text = sliderSettings.Name
-			slider.Parent = tabPage
-			slider.Visible = true
-			
-			local currentValue = sliderSettings.CurrentValue or sliderSettings.Range[1]
-			local isDragging = false
-			
-			local function updateSlider(value)
-				value = math.clamp(value, sliderSettings.Range[1], sliderSettings.Range[2])
-				currentValue = value
-				
-				local percentage = (value - sliderSettings.Range[1]) / 
-								   (sliderSettings.Range[2] - sliderSettings.Range[1])
-				
-				createTween(slider.Main.Progress, {
-					Size = UDim2.new(percentage, 0, 1, 0)
-				}):Play()
-				
-				slider.Main.Information.Text = string.format("%.2f", value) .. 
-					(sliderSettings.Suffix or "")
-			end
-			
-			updateSlider(currentValue)
-			
-			-- Drag handling
-			slider.Main.Interact.InputBegan:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1 then
-					isDragging = true
-				end
-			end)
-			
-			slider.Main.Interact.InputEnded:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1 then
-					isDragging = false
-				end
-			end)
-			
-			slider.Main.Interact.MouseMoved:Connect(function()
-				if isDragging then
-					local mousePos = UserInputService:GetMouseLocation()
-					local absolutePos = slider.Main.AbsolutePosition
-					local absoluteSize = slider.Main.AbsoluteSize
-					
-					local relativeX = math.clamp(
-						(mousePos.X - absolutePos.X) / absoluteSize.X,
-						0, 1
-					)
-					
-					local newValue = sliderSettings.Range[1] + 
-									relativeX * (sliderSettings.Range[2] - sliderSettings.Range[1])
-					
-					-- Apply increment
-					if sliderSettings.Increment then
-						newValue = math.floor(newValue / sliderSettings.Increment + 0.5) * 
-								   sliderSettings.Increment
-					end
-					
-					updateSlider(newValue)
-					
-					local success, err = pcall(function()
-						sliderSettings.Callback(newValue)
-					end)
-					
-					if not success then
-						warn("Slider callback error:", err)
-					end
-				end
-			end)
-			
-			local sliderValue = {}
-			function sliderValue:Set(value)
-				updateSlider(value)
-			end
-			
-			function sliderValue:Get()
-				return currentValue
-			end
-			
-			return sliderValue
-		end
-		
-		-- Dropdown Element
-		function Tab:CreateDropdown(dropdownSettings)
-			local dropdown = Elements.Template.Dropdown:Clone()
-			dropdown.Name = dropdownSettings.Name
-			dropdown.Title.Text = dropdownSettings.Name
-			dropdown.Parent = tabPage
-			dropdown.Visible = true
-			
-			local selectedOptions = dropdownSettings.CurrentOption or {}
-			if type(selectedOptions) == "string" then
-				selectedOptions = {selectedOptions}
-			end
-			
-			local isOpen = false
-			
-			local function updateDropdown()
-				if #selectedOptions == 0 then
-					dropdown.Selected.Text = "None"
-				elseif #selectedOptions == 1 then
-					dropdown.Selected.Text = selectedOptions[1]
-				else
-					dropdown.Selected.Text = string.format("%d selected", #selectedOptions)
+		-- Click handler for tab button
+		interact.MouseButton1Click:Connect(function()
+			-- Hide all tab pages
+			for _, page in pairs(Elements:GetChildren()) do
+				if page:IsA("ScrollingFrame") then
+					page.Visible = false
 				end
 			end
 			
-			updateDropdown()
+			-- Show this tab page
+			tabPage.Visible = true
 			
-			-- Toggle dropdown
-			dropdown.Interact.MouseButton1Click:Connect(function()
-				isOpen = not isOpen
-				
-				if isOpen then
-					createTween(dropdown, {
-						Size = UDim2.new(1, -10, 0, 200)
+			-- Update tab button appearance
+			for _, btn in pairs(TabList:GetChildren()) do
+				if btn:IsA("Frame") and btn.Name ~= "Template" then
+					createTween(btn, {
+						BackgroundColor3 = getTheme().Card
 					}):Play()
-					dropdown.List.Visible = true
-				else
-					createTween(dropdown, {
-						Size = UDim2.new(1, -10, 0, 45)
-					}):Play()
-					dropdown.List.Visible = false
-				end
-			end)
-			
-			-- Populate options
-			for _, option in pairs(dropdownSettings.Options or {}) do
-				local optionButton = Elements.Template.Dropdown.List.Template:Clone()
-				optionButton.Name = option
-				optionButton.Title.Text = option
-				optionButton.Parent = dropdown.List
-				optionButton.Visible = true
-				
-				optionButton.Interact.MouseButton1Click:Connect(function()
-					if dropdownSettings.MultipleOptions then
-						local index = table.find(selectedOptions, option)
-						if index then
-							table.remove(selectedOptions, index)
-						else
-							table.insert(selectedOptions, option)
-						end
-					else
-						selectedOptions = {option}
-						isOpen = false
-						dropdown.List.Visible = false
-						createTween(dropdown, {
-							Size = UDim2.new(1, -10, 0, 45)
+					if btn:FindFirstChild("Title") then
+						createTween(btn.Title, {
+							TextColor3 = getTheme().TextSecondary
 						}):Play()
 					end
-					
-					updateDropdown()
-					
-					local success, err = pcall(function()
-						dropdownSettings.Callback(selectedOptions)
-					end)
-					
-					if not success then
-						warn("Dropdown callback error:", err)
-					end
-				end)
-			end
-			
-			local dropdownValue = {}
-			function dropdownValue:Set(options)
-				selectedOptions = options
-				if type(selectedOptions) == "string" then
-					selectedOptions = {selectedOptions}
 				end
-				updateDropdown()
 			end
 			
-			function dropdownValue:Get()
-				return selectedOptions
+			createTween(tabButton, {
+				BackgroundColor3 = getTheme().Primary
+			}):Play()
+			if tabButton:FindFirstChild("Title") then
+				createTween(tabButton.Title, {
+					TextColor3 = Color3.new(1, 1, 1)
+				}):Play()
 			end
-			
-			return dropdownValue
-		end
+		end)
 		
-		-- Input Element
-		function Tab:CreateInput(inputSettings)
-			local input = Elements.Template.Input:Clone()
-			input.Name = inputSettings.Name
-			input.Title.Text = inputSettings.Name
-			input.Parent = tabPage
-			input.Visible = true
-			
-			input.InputFrame.InputBox.Text = inputSettings.CurrentValue or ""
-			input.InputFrame.InputBox.PlaceholderText = inputSettings.PlaceholderText or ""
-			
-			input.InputFrame.InputBox.FocusLost:Connect(function(enterPressed)
-				if enterPressed then
-					local value = input.InputFrame.InputBox.Text
-					
-					local success, err = pcall(function()
-						inputSettings.Callback(value)
-					end)
-					
-					if not success then
-						warn("Input callback error:", err)
-					end
-					
-					if inputSettings.RemoveTextAfterFocusLost then
-						input.InputFrame.InputBox.Text = ""
-					end
-				end
-			end)
-			
-			local inputValue = {}
-			function inputValue:Set(text)
-				input.InputFrame.InputBox.Text = text
+		-- Show first tab by default
+		if #TabList:GetChildren() == 1 then
+			tabPage.Visible = true
+			createTween(tabButton, {
+				BackgroundColor3 = getTheme().Primary
+			}):Play()
+			if tabButton:FindFirstChild("Title") then
+				tabButton.Title.TextColor3 = Color3.new(1, 1, 1)
 			end
-			
-			function inputValue:Get()
-				return input.InputFrame.InputBox.Text
-			end
-			
-			return inputValue
-		end
-		
-		-- Label Element
-		function Tab:CreateLabel(text, icon, color)
-			local label = Elements.Template.Label:Clone()
-			label.Title.Text = text
-			label.Parent = tabPage
-			label.Visible = true
-			
-			if color then
-				label.BackgroundColor3 = color
-			end
-			
-			if icon then
-				label.Icon.Image = icon
-				label.Icon.Visible = true
-			end
-			
-			local labelValue = {}
-			function labelValue:Set(newText)
-				label.Title.Text = newText
-			end
-			
-			return labelValue
-		end
-		
-		-- Section
-		function Tab:CreateSection(name)
-			local section = Elements.Template.SectionTitle:Clone()
-			section.Title.Text = name
-			section.Parent = tabPage
-			section.Visible = true
-			
-			local sectionValue = {}
-			function sectionValue:Set(newName)
-				section.Title.Text = newName
-			end
-			
-			return sectionValue
 		end
 		
 		return Tab
@@ -748,6 +769,11 @@ function RayfieldLibrary:CreateWindow(settings)
 		createTween(Main, {
 			Position = UDim2.new(0.5, 0, 1.5, 0)
 		}):Play()
+		RayfieldLibrary:Notify({
+			Title = "Interface Hidden",
+			Content = "Press " .. (settings.ToggleKey or "RightShift") .. " to show",
+			Duration = 5
+		})
 	end
 	
 	function Window:Show()
@@ -757,22 +783,21 @@ function RayfieldLibrary:CreateWindow(settings)
 	end
 	
 	-- Setup window controls
-	Topbar.Hide.MouseButton1Click:Connect(function()
-		Window:Hide()
-		RayfieldLibrary:Notify({
-			Title = "Interface Hidden",
-			Content = "Press " .. (settings.ToggleKey or "RightShift") .. " to show",
-			Duration = 5
-		})
-	end)
+	if Topbar:FindFirstChild("Hide") then
+		Topbar.Hide.MouseButton1Click:Connect(function()
+			Window:Hide()
+		end)
+	end
 	
-	Topbar.ChangeSize.MouseButton1Click:Connect(function()
-		if Main.Size.Y.Offset > 100 then
-			Window:Minimize()
-		else
-			Window:Maximize()
-		end
-	end)
+	if Topbar:FindFirstChild("ChangeSize") then
+		Topbar.ChangeSize.MouseButton1Click:Connect(function()
+			if Main.Size.Y.Offset > 100 then
+				Window:Minimize()
+			else
+				Window:Maximize()
+			end
+		end)
+	end
 	
 	-- Keybind to show/hide
 	if settings.ToggleKey then
@@ -830,7 +855,6 @@ end
 
 -- Initialize library functions
 function RayfieldLibrary:LoadConfiguration()
-	-- Configuration loading implementation
 	RayfieldLibrary:Notify({
 		Title = "Configuration",
 		Content = "Configuration system loaded",
