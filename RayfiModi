@@ -1,887 +1,1403 @@
---[[
-
-	Rayfield Interface Suite - Pink Elegance Edition
-	Remastered Version mit modernem Design
-	by Sirius (Remixed by Assistant)
-
-]]
-
-if debugX then
-	warn('Initialising Rayfield - Pink Edition')
-end
-
-local function getService(name)
-	local service = game:GetService(name)
-	return if cloneref then cloneref(service) else service
-end
+local OrionLib = {}
 
 -- Services
-local HttpService = getService('HttpService')
-local RunService = getService('RunService')
-local UserInputService = getService("UserInputService")
-local TweenService = getService("TweenService")
-local Players = getService("Players")
-local CoreGui = getService("CoreGui")
-local TextService = getService("TextService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- Environment Check
-local useStudio = RunService:IsStudio() or false
+-- Variablen
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
 
--- Verbesserte Ladefunktion
-local function loadWithTimeout(url, timeout)
-	timeout = timeout or 5
-	local promise = {}
-	
-	task.spawn(function()
-		local startTime = tick()
-		local success, result = pcall(function()
-			return game:HttpGetAsync(url)
-		end)
-		
-		if tick() - startTime > timeout then
-			promise.success = false
-			promise.result = "Request timed out"
-			return
-		end
-		
-		if not success then
-			promise.success = false
-			promise.result = result
-			return
-		end
-		
-		if #result == 0 then
-			promise.success = false
-			promise.result = "Empty response"
-			return
-		end
-		
-		local execSuccess, execResult = pcall(function()
-			return loadstring(result)()
-		end)
-		
-		promise.success = execSuccess
-		promise.result = execResult
-	end)
-	
-	-- Wait for promise with timeout
-	local startWait = tick()
-	while not promise.success and promise.success ~= false do
-		if tick() - startWait > timeout + 1 then
-			return nil
-		end
-		task.wait(0.1)
-	end
-	
-	return if promise.success then promise.result else nil
-end
-
--- Variables
-local InterfaceBuild = 'PINK-1.0'
-local Release = "Pink Edition v2.0"
-local RayfieldFolder = "Rayfield_Pink"
-local ConfigurationFolder = RayfieldFolder.."/Configurations"
-local ConfigurationExtension = ".rflp"  -- Pink edition extension
-
--- Verbessertes Theme System
-local RayfieldLibrary = {
-	Flags = {},
-	CurrentTheme = "PinkElegance",
-	Themes = {
-		PinkElegance = {
-			Primary = Color3.fromRGB(255, 105, 180),  -- Hot Pink
-			Secondary = Color3.fromRGB(255, 130, 200), -- Light Pink
-			Dark = Color3.fromRGB(15, 15, 15),         -- Deep Black
-			Medium = Color3.fromRGB(30, 30, 30),       -- Dark Gray
-			Light = Color3.fromRGB(50, 50, 50),        -- Medium Gray
-			Text = Color3.fromRGB(240, 240, 240),      -- White Text
-			TextSecondary = Color3.fromRGB(180, 180, 180), -- Gray Text
-			
-			-- Specific Components
-			Background = Color3.fromRGB(15, 15, 15),
-			Topbar = Color3.fromRGB(20, 20, 20),
-			Card = Color3.fromRGB(25, 25, 25),
-			CardHover = Color3.fromRGB(35, 35, 35),
-			
-			-- Accents
-			Success = Color3.fromRGB(76, 175, 80),
-			Warning = Color3.fromRGB(255, 193, 7),
-			Error = Color3.fromRGB(244, 67, 54),
-			Info = Color3.fromRGB(33, 150, 243),
-			
-			-- Transparencies
-			Transparency = {
-				Low = 0.1,
-				Medium = 0.3,
-				High = 0.7,
-				Full = 0.9
-			},
-			
-			-- Shadows
-			ShadowIntensity = 0.8,
-			
-			-- Animations
-			AnimationSpeed = 0.3,
-			EasingStyle = Enum.EasingStyle.Quint
-		},
-		
-		PinkNeon = {
-			Primary = Color3.fromRGB(255, 20, 147),    -- Deep Pink
-			Secondary = Color3.fromRGB(255, 105, 180),
-			Dark = Color3.fromRGB(5, 5, 5),
-			Medium = Color3.fromRGB(20, 20, 20),
-			Light = Color3.fromRGB(40, 40, 40),
-			Text = Color3.fromRGB(255, 255, 255),
-			TextSecondary = Color3.fromRGB(200, 200, 200),
-			Background = Color3.fromRGB(10, 10, 10),
-			Topbar = Color3.fromRGB(15, 15, 15),
-			Card = Color3.fromRGB(25, 25, 25),
-			CardHover = Color3.fromRGB(35, 35, 35)
-		},
-		
-		PinkMinimal = {
-			Primary = Color3.fromRGB(219, 112, 147),   -- Pale Violet Red
-			Secondary = Color3.fromRGB(255, 182, 193), -- Light Pink
-			Dark = Color3.fromRGB(25, 25, 25),
-			Medium = Color3.fromRGB(40, 40, 40),
-			Light = Color3.fromRGB(60, 60, 60),
-			Text = Color3.fromRGB(230, 230, 230),
-			TextSecondary = Color3.fromRGB(170, 170, 170),
-			Background = Color3.fromRGB(30, 30, 30),
-			Topbar = Color3.fromRGB(35, 35, 35),
-			Card = Color3.fromRGB(45, 45, 45),
-			CardHover = Color3.fromRGB(55, 55, 55)
-		}
-	}
+OrionLib.Theme = {
+    Background = Color3.fromRGB(20, 20, 30),
+    Secondary = Color3.fromRGB(30, 30, 45),
+    Tertiary = Color3.fromRGB(40, 40, 60),
+    Accent = Color3.fromRGB(255, 50, 150),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextSecondary = Color3.fromRGB(180, 180, 200),
+    Border = Color3.fromRGB(60, 60, 80)
 }
 
--- Helper Functions
-local function getTheme()
-	return RayfieldLibrary.Themes[RayfieldLibrary.CurrentTheme]
-end
+OrionLib.Flags = {}
 
-local function createTween(object, properties, duration)
-	duration = duration or getTheme().AnimationSpeed
-	return TweenService:Create(
-		object,
-		TweenInfo.new(
-			duration,
-			getTheme().EasingStyle,
-			Enum.EasingDirection.Out
-		),
-		properties
-	)
-end
+-- ScreenGui erstellen
+local Orion = Instance.new("ScreenGui")
+Orion.Name = "OrionLib"
+Orion.ResetOnSpawn = false
+Orion.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local function applyHoverEffect(element, normalColor, hoverColor)
-	if not element:IsA("GuiObject") then return end
-	
-	element.MouseEnter:Connect(function()
-		createTween(element, {BackgroundColor3 = hoverColor}):Play()
-	end)
-	
-	element.MouseLeave:Connect(function()
-		createTween(element, {BackgroundColor3 = normalColor}):Play()
-	end)
-end
-
--- Initialize UI
-local Rayfield
-if useStudio then
-	-- Create a basic UI structure for Studio testing
-	Rayfield = Instance.new("ScreenGui")
-	Rayfield.Name = "RayfieldPink"
-	Rayfield.DisplayOrder = 999
-	
-	Main = Instance.new("Frame")
-	Main.Name = "Main"
-	Main.Size = UDim2.new(0, 500, 0, 400)
-	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Main.AnchorPoint = Vector2.new(0.5, 0.5)
-	Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-	Main.BorderSizePixel = 0
-	Main.Parent = Rayfield
-	
-	-- Create basic UI elements for testing
-	Topbar = Instance.new("Frame")
-	Topbar.Name = "Topbar"
-	Topbar.Size = UDim2.new(1, 0, 0, 40)
-	Topbar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	Topbar.BorderSizePixel = 0
-	Topbar.Parent = Main
-	
-	local Title = Instance.new("TextLabel")
-	Title.Name = "Title"
-	Title.Text = "Rayfield Pink"
-	Title.Size = UDim2.new(0, 200, 1, 0)
-	Title.Position = UDim2.new(0, 10, 0, 0)
-	Title.BackgroundTransparency = 1
-	Title.TextColor3 = Color3.fromRGB(240, 240, 240)
-	Title.TextXAlignment = Enum.TextXAlignment.Left
-	Title.Font = Enum.Font.GothamSemibold
-	Title.TextSize = 16
-	Title.Parent = Topbar
-	
-	-- Create TabList and Elements
-	TabList = Instance.new("Frame")
-	TabList.Name = "TabList"
-	TabList.Size = UDim2.new(0, 150, 1, -40)
-	TabList.Position = UDim2.new(0, 0, 0, 40)
-	TabList.BackgroundTransparency = 1
-	TabList.Parent = Main
-	
-	Elements = Instance.new("Frame")
-	Elements.Name = "Elements"
-	Elements.Size = UDim2.new(1, -150, 1, -40)
-	Elements.Position = UDim2.new(0, 150, 0, 40)
-	Elements.BackgroundTransparency = 1
-	Elements.Parent = Main
-	
-	-- Create templates
-	local Template = Instance.new("Frame")
-	Template.Name = "Template"
-	Template.Visible = false
-	Template.Parent = TabList
-	
-	local ButtonTemplate = Instance.new("Frame")
-	ButtonTemplate.Name = "Button"
-	ButtonTemplate.Size = UDim2.new(1, -20, 0, 40)
-	ButtonTemplate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	ButtonTemplate.BorderSizePixel = 0
-	ButtonTemplate.Parent = Instance.new("Frame")
-	ButtonTemplate.Parent.Name = "Template"
-	ButtonTemplate.Parent.Visible = false
-	ButtonTemplate.Parent.Parent = Elements
-	
-	-- Create Notifications
-	Notifications = Instance.new("Frame")
-	Notifications.Name = "Notifications"
-	Notifications.Size = UDim2.new(0, 300, 1, 0)
-	Notifications.Position = UDim2.new(1, 10, 0, 0)
-	Notifications.BackgroundTransparency = 1
-	Notifications.Parent = Rayfield
-	
-	local NotificationTemplate = Instance.new("Frame")
-	NotificationTemplate.Name = "Template"
-	NotificationTemplate.Size = UDim2.new(1, 0, 0, 80)
-	NotificationTemplate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	NotificationTemplate.Visible = false
-	NotificationTemplate.Parent = Notifications
-	
-	LoadingFrame = Instance.new("Frame")
-	LoadingFrame.Name = "LoadingFrame"
-	LoadingFrame.Size = UDim2.new(1, 0, 1, 0)
-	LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-	LoadingFrame.Visible = true
-	LoadingFrame.Parent = Main
+if syn and syn.protect_gui then
+    syn.protect_gui(Orion)
+    Orion.Parent = game.CoreGui
+elseif gethui then
+    Orion.Parent = gethui()
 else
-	-- Load actual Rayfield UI
-	Rayfield = game:GetObjects("rbxassetid://10804731440")[1]
+    Orion.Parent = game.CoreGui
 end
 
-Rayfield.Name = "RayfieldPink"
-Rayfield.DisplayOrder = 999
-Rayfield.Enabled = false
-
--- Parent to appropriate location
-if gethui then
-	Rayfield.Parent = gethui()
-elseif syn and syn.protect_gui then 
-	syn.protect_gui(Rayfield)
-	Rayfield.Parent = CoreGui
-else
-	Rayfield.Parent = CoreGui
+-- Hilfsfunktionen
+local function Create(class, props)
+    local obj = Instance.new(class)
+    for prop, val in pairs(props) do
+        if prop ~= "Parent" then
+            obj[prop] = val
+        end
+    end
+    if props.Parent then
+        obj.Parent = props.Parent
+    end
+    return obj
 end
 
--- Clean up old interfaces
-for _, gui in pairs(CoreGui:GetChildren()) do
-	if (gui.Name == "Rayfield" or gui.Name == "RayfieldPink") and gui ~= Rayfield then
-		gui:Destroy()
-	end
+local function RippleEffect(button)
+    local ripple = Create("Frame", {
+        Parent = button,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 0.7,
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        ZIndex = 10
+    })
+    
+    local corner = Create("UICorner", {
+        Parent = ripple,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    TweenService:Create(ripple, TweenInfo.new(0.5), {
+        Size = UDim2.new(2, 0, 2, 0),
+        BackgroundTransparency = 1
+    }):Play()
+    
+    game.Debris:AddItem(ripple, 0.5)
 end
 
--- Get main components (now they should exist)
-local Main = Rayfield:WaitForChild("Main")
-local Topbar = Main:WaitForChild("Topbar")
-local Elements = Main:WaitForChild("Elements")
-local TabList = Main:WaitForChild("TabList")
-local LoadingFrame = Main:WaitForChild("LoadingFrame")
-local Notifications = Rayfield:WaitForChild("Notifications")
-
--- Apply Initial Theme
-local function applyTheme(themeName)
-	if RayfieldLibrary.Themes[themeName] then
-		RayfieldLibrary.CurrentTheme = themeName
-	end
-	
-	local theme = getTheme()
-	
-	-- Apply to main components
-	Main.BackgroundColor3 = theme.Background
-	Topbar.BackgroundColor3 = theme.Topbar
-	
-	-- Safely update text elements
-	for _, element in pairs(Rayfield:GetDescendants()) do
-		if element:IsA("TextLabel") or element:IsA("TextBox") then
-			-- Check if element exists and has expected properties
-			pcall(function()
-				if element.Name == "Title" or element.Name == "Content" then
-					element.TextColor3 = theme.Text
-				else
-					element.TextColor3 = theme.TextSecondary
-				end
-			end)
-		end
-	end
-	
-	-- Safely update tab colors
-	for _, tab in pairs(TabList:GetChildren()) do
-		if tab:IsA("Frame") and tab.Name ~= "Template" and tab.Name ~= "Placeholder" then
-			pcall(function()
-				tab.BackgroundColor3 = theme.Card
-				-- Check if Title exists
-				if tab:FindFirstChild("Title") then
-					tab.Title.TextColor3 = theme.TextSecondary
-				end
-			end)
-		end
-	end
-	
-	return true
+-- Main Window Funktion
+function OrionLib:MakeWindow(config)
+    config = config or {}
+    config.Name = config.Name or "Orion Lib"
+    config.IntroText = config.IntroText or "Orion Lib"
+    
+    -- Main Window
+    local MainWindow = Create("Frame", {
+        Parent = Orion,
+        BackgroundColor3 = OrionLib.Theme.Background,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.5, -300, 0.5, -200),
+        Size = UDim2.new(0, 600, 0, 400),
+        ClipsDescendants = true,
+        Active = true,
+        Selectable = true
+    })
+    
+    Create("UICorner", {
+        Parent = MainWindow,
+        CornerRadius = UDim.new(0, 8)
+    })
+    
+    Create("UIStroke", {
+        Parent = MainWindow,
+        Color = OrionLib.Theme.Accent,
+        Thickness = 2
+    })
+    
+    -- Top Bar
+    local TopBar = Create("Frame", {
+        Parent = MainWindow,
+        BackgroundColor3 = OrionLib.Theme.Secondary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 40)
+    })
+    
+    Create("UICorner", {
+        Parent = TopBar,
+        CornerRadius = UDim.new(0, 8)
+    })
+    
+    local Title = Create("TextLabel", {
+        Parent = TopBar,
+        Text = config.Name,
+        TextColor3 = OrionLib.Theme.Text,
+        TextSize = 18,
+        Font = Enum.Font.GothamBold,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 15, 0, 0),
+        Size = UDim2.new(0.5, 0, 1, 0),
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    -- Close Button
+    local CloseButton = Create("TextButton", {
+        Parent = TopBar,
+        Text = "×",
+        TextColor3 = OrionLib.Theme.Text,
+        TextSize = 24,
+        Font = Enum.Font.GothamBold,
+        BackgroundColor3 = OrionLib.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -45, 0.5, -15),
+        Size = UDim2.new(0, 30, 0, 30),
+        AnchorPoint = Vector2.new(1, 0.5)
+    })
+    
+    Create("UICorner", {
+        Parent = CloseButton,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    Create("UIStroke", {
+        Parent = CloseButton,
+        Color = OrionLib.Theme.Accent,
+        Thickness = 1
+    })
+    
+    -- Minimize Button
+    local MinimizeButton = Create("TextButton", {
+        Parent = TopBar,
+        Text = "_",
+        TextColor3 = OrionLib.Theme.Text,
+        TextSize = 24,
+        Font = Enum.Font.GothamBold,
+        BackgroundColor3 = OrionLib.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -85, 0.5, -15),
+        Size = UDim2.new(0, 30, 0, 30),
+        AnchorPoint = Vector2.new(1, 0.5)
+    })
+    
+    Create("UICorner", {
+        Parent = MinimizeButton,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    Create("UIStroke", {
+        Parent = MinimizeButton,
+        Color = OrionLib.Theme.Accent,
+        Thickness = 1
+    })
+    
+    -- Sidebar
+    local Sidebar = Create("Frame", {
+        Parent = MainWindow,
+        BackgroundColor3 = OrionLib.Theme.Tertiary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 40),
+        Size = UDim2.new(0, 150, 1, -40)
+    })
+    
+    Create("UICorner", {
+        Parent = Sidebar
+    })
+    
+    -- Tab Holder
+    local TabHolder = Create("ScrollingFrame", {
+        Parent = Sidebar,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 1, -60),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = OrionLib.Theme.Accent
+    })
+    
+    Create("UIListLayout", {
+        Parent = TabHolder,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5)
+    })
+    
+    Create("UIPadding", {
+        Parent = TabHolder,
+        PaddingTop = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10)
+    })
+    
+    -- Content Area
+    local ContentArea = Create("ScrollingFrame", {
+        Parent = MainWindow,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 155, 0, 45),
+        Size = UDim2.new(1, -160, 1, -50),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = OrionLib.Theme.Accent
+    })
+    
+    Create("UIListLayout", {
+        Parent = ContentArea,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 10)
+    })
+    
+    Create("UIPadding", {
+        Parent = ContentArea,
+        PaddingTop = UDim.new(0, 10),
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10)
+    })
+    
+    -- User Info
+    local UserFrame = Create("Frame", {
+        Parent = Sidebar,
+        BackgroundColor3 = OrionLib.Theme.Secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 10, 1, -50),
+        Size = UDim2.new(1, -20, 0, 40)
+    })
+    
+    Create("UICorner", {
+        Parent = UserFrame,
+        CornerRadius = UDim.new(0, 6)
+    })
+    
+    Create("UIStroke", {
+        Parent = UserFrame,
+        Color = OrionLib.Theme.Accent,
+        Thickness = 1
+    })
+    
+    local Avatar = Create("ImageLabel", {
+        Parent = UserFrame,
+        Image = "rbxasset://textures/ui/GuiImagePlaceholder.png",
+        BackgroundColor3 = OrionLib.Theme.Border,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 5, 0.5, -12),
+        Size = UDim2.new(0, 24, 0, 24),
+        AnchorPoint = Vector2.new(0, 0.5)
+    })
+    
+    Create("UICorner", {
+        Parent = Avatar,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    local Username = Create("TextLabel", {
+        Parent = UserFrame,
+        Text = Player.Name,
+        TextColor3 = OrionLib.Theme.Text,
+        TextSize = 12,
+        Font = Enum.Font.Gotham,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 34, 0, 5),
+        Size = UDim2.new(1, -34, 0, 15),
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    -- Drag Funktion
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+    
+    local function Update(input)
+        local delta = input.Position - dragStart
+        MainWindow.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainWindow.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    TopBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            Update(input)
+        end
+    end)
+    
+    -- Button Events
+    local minimized = false
+    MinimizeButton.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        if minimized then
+            TweenService:Create(MainWindow, TweenInfo.new(0.3), {
+                Size = UDim2.new(0, 600, 0, 40)
+            }):Play()
+        else
+            TweenService:Create(MainWindow, TweenInfo.new(0.3), {
+                Size = UDim2.new(0, 600, 0, 400)
+            }):Play()
+        end
+    end)
+    
+    CloseButton.MouseButton1Click:Connect(function()
+        MainWindow.Visible = false
+    end)
+    
+    -- Tab System
+    local Tabs = {}
+    local CurrentTab = nil
+    
+    local function CreateTab(tabName, tabIcon)
+        local TabButton = Create("TextButton", {
+            Parent = TabHolder,
+            Text = "",
+            BackgroundColor3 = OrionLib.Theme.Secondary,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 35),
+            AutoButtonColor = false
+        })
+        
+        Create("UICorner", {
+            Parent = TabButton,
+            CornerRadius = UDim.new(0, 6)
+        })
+        
+        Create("UIStroke", {
+            Parent = TabButton,
+            Color = OrionLib.Theme.Accent,
+            Thickness = 1
+        })
+        
+        local TabText = Create("TextLabel", {
+            Parent = TabButton,
+            Text = tabName,
+            TextColor3 = OrionLib.Theme.TextSecondary,
+            TextSize = 14,
+            Font = Enum.Font.GothamSemibold,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -10, 1, 0),
+            Position = UDim2.new(0, 10, 0, 0),
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        local TabContent = Create("Frame", {
+            Parent = ContentArea,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 0),
+            Visible = false,
+            AutomaticSize = Enum.AutomaticSize.Y
+        })
+        
+        Create("UIListLayout", {
+            Parent = TabContent,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 10)
+        })
+        
+        Create("UIPadding", {
+            Parent = TabContent,
+            PaddingTop = UDim.new(0, 5),
+            PaddingBottom = UDim.new(0, 5)
+        })
+        
+        -- Hover Effects
+        TabButton.MouseEnter:Connect(function()
+            if CurrentTab ~= TabButton then
+                TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Color3.fromRGB(
+                        OrionLib.Theme.Secondary.R * 255 + 10,
+                        OrionLib.Theme.Secondary.G * 255 + 10,
+                        OrionLib.Theme.Secondary.B * 255 + 10
+                    )
+                }):Play()
+            end
+        end)
+        
+        TabButton.MouseLeave:Connect(function()
+            if CurrentTab ~= TabButton then
+                TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                    BackgroundColor3 = OrionLib.Theme.Secondary
+                }):Play()
+            end
+        end)
+        
+        -- Click Event
+        TabButton.MouseButton1Click:Connect(function()
+            -- Deaktiviere vorherigen Tab
+            if CurrentTab then
+                TweenService:Create(CurrentTab.Button, TweenInfo.new(0.2), {
+                    BackgroundColor3 = OrionLib.Theme.Secondary
+                }):Play()
+                TweenService:Create(CurrentTab.Button.TextLabel, TweenInfo.new(0.2), {
+                    TextColor3 = OrionLib.Theme.TextSecondary
+                }):Play()
+                CurrentTab.Content.Visible = false
+            end
+            
+            -- Aktiviere neuen Tab
+            CurrentTab = Tabs[tabName]
+            TweenService:Create(TabButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = OrionLib.Theme.Accent
+            }):Play()
+            TweenService:Create(TabText, TweenInfo.new(0.2), {
+                TextColor3 = Color3.fromRGB(255, 255, 255)
+            }):Play()
+            TabContent.Visible = true
+            RippleEffect(TabButton)
+        end)
+        
+        -- Speichere Tab
+        Tabs[tabName] = {
+            Button = TabButton,
+            Content = TabContent,
+            Text = TabText
+        }
+        
+        -- Erster Tab wird aktiviert
+        if not CurrentTab then
+            CurrentTab = Tabs[tabName]
+            TabButton.BackgroundColor3 = OrionLib.Theme.Accent
+            TabText.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TabContent.Visible = true
+        end
+        
+        -- Update TabHolder Größe
+        local function UpdateTabSize()
+            local totalHeight = 0
+            for _, child in pairs(TabHolder:GetChildren()) do
+                if child:IsA("TextButton") then
+                    totalHeight = totalHeight + child.Size.Y.Offset + 5
+                end
+            end
+            TabHolder.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 10)
+        end
+        
+        UpdateTabSize()
+        TabHolder.ChildAdded:Connect(UpdateTabSize)
+        TabHolder.ChildRemoved:Connect(UpdateTabSize)
+        
+        -- Tab Funktionen
+        local TabFunctions = {}
+        
+        function TabFunctions:AddSection(sectionName)
+            local Section = Create("Frame", {
+                Parent = TabContent,
+                BackgroundColor3 = OrionLib.Theme.Secondary,
+                BorderSizePixel = 0,
+                Size = UDim2.new(1, 0, 0, 30),
+                AutomaticSize = Enum.AutomaticSize.Y
+            })
+            
+            Create("UICorner", {
+                Parent = Section,
+                CornerRadius = UDim.new(0, 6)
+            })
+            
+            Create("UIStroke", {
+                Parent = Section,
+                Color = OrionLib.Theme.Accent,
+                Thickness = 1
+            })
+            
+            local SectionTitle = Create("TextLabel", {
+                Parent = Section,
+                Text = "  " .. sectionName,
+                TextColor3 = OrionLib.Theme.Accent,
+                TextSize = 13,
+                Font = Enum.Font.GothamBold,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 30),
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local ContentContainer = Create("Frame", {
+                Parent = Section,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 0, 0, 35),
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y
+            })
+            
+            Create("UIListLayout", {
+                Parent = ContentContainer,
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 8)
+            })
+            
+            Create("UIPadding", {
+                Parent = ContentContainer,
+                PaddingTop = UDim.new(0, 5),
+                PaddingBottom = UDim.new(0, 10),
+                PaddingLeft = UDim.new(0, 10),
+                PaddingRight = UDim.new(0, 10)
+            })
+            
+            local SectionFunctions = {}
+            
+            -- Button
+            function SectionFunctions:AddButton(btnConfig)
+                btnConfig = btnConfig or {}
+                btnConfig.Name = btnConfig.Name or "Button"
+                btnConfig.Callback = btnConfig.Callback or function() end
+                
+                local Button = Create("TextButton", {
+                    Parent = ContentContainer,
+                    Text = "",
+                    BackgroundColor3 = OrionLib.Theme.Tertiary,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 0, 35),
+                    AutoButtonColor = false
+                })
+                
+                Create("UICorner", {
+                    Parent = Button,
+                    CornerRadius = UDim.new(0, 6)
+                })
+                
+                Create("UIStroke", {
+                    Parent = Button,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local ButtonText = Create("TextLabel", {
+                    Parent = Button,
+                    Text = btnConfig.Name,
+                    TextColor3 = OrionLib.Theme.Text,
+                    TextSize = 14,
+                    Font = Enum.Font.GothamSemibold,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    TextXAlignment = Enum.TextXAlignment.Center
+                })
+                
+                -- Hover Effects
+                Button.MouseEnter:Connect(function()
+                    TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            OrionLib.Theme.Tertiary.R * 255 + 15,
+                            OrionLib.Theme.Tertiary.G * 255 + 15,
+                            OrionLib.Theme.Tertiary.B * 255 + 15
+                        )
+                    }):Play()
+                end)
+                
+                Button.MouseLeave:Connect(function()
+                    TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundColor3 = OrionLib.Theme.Tertiary
+                    }):Play()
+                end)
+                
+                -- Click Event
+                Button.MouseButton1Click:Connect(function()
+                    RippleEffect(Button)
+                    btnConfig.Callback()
+                end)
+                
+                local ButtonFunctions = {}
+                
+                function ButtonFunctions:Set(newText)
+                    ButtonText.Text = newText
+                end
+                
+                return ButtonFunctions
+            end
+            
+            -- Toggle
+            function SectionFunctions:AddToggle(toggleConfig)
+                toggleConfig = toggleConfig or {}
+                toggleConfig.Name = toggleConfig.Name or "Toggle"
+                toggleConfig.Default = toggleConfig.Default or false
+                toggleConfig.Callback = toggleConfig.Callback or function() end
+                toggleConfig.Flag = toggleConfig.Flag or nil
+                
+                local Toggle = {Value = toggleConfig.Default}
+                
+                local ToggleFrame = Create("TextButton", {
+                    Parent = ContentContainer,
+                    Text = "",
+                    BackgroundColor3 = OrionLib.Theme.Tertiary,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 0, 35),
+                    AutoButtonColor = false
+                })
+                
+                Create("UICorner", {
+                    Parent = ToggleFrame,
+                    CornerRadius = UDim.new(0, 6)
+                })
+                
+                Create("UIStroke", {
+                    Parent = ToggleFrame,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local ToggleText = Create("TextLabel", {
+                    Parent = ToggleFrame,
+                    Text = toggleConfig.Name,
+                    TextColor3 = OrionLib.Theme.Text,
+                    TextSize = 14,
+                    Font = Enum.Font.GothamSemibold,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 10, 0, 0),
+                    Size = UDim2.new(0.7, -10, 1, 0),
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local ToggleIndicator = Create("Frame", {
+                    Parent = ToggleFrame,
+                    BackgroundColor3 = Toggle.Value and OrionLib.Theme.Accent or OrionLib.Theme.Border,
+                    BorderSizePixel = 0,
+                    Position = UDim2.new(1, -45, 0.5, -10),
+                    Size = UDim2.new(0, 40, 0, 20),
+                    AnchorPoint = Vector2.new(1, 0.5)
+                })
+                
+                Create("UICorner", {
+                    Parent = ToggleIndicator,
+                    CornerRadius = UDim.new(1, 0)
+                })
+                
+                Create("UIStroke", {
+                    Parent = ToggleIndicator,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local ToggleDot = Create("Frame", {
+                    Parent = ToggleIndicator,
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Position = Toggle.Value and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0),
+                    Size = UDim2.new(0, 18, 0, 18),
+                    AnchorPoint = Vector2.new(0.5, 0.5)
+                })
+                
+                Create("UICorner", {
+                    Parent = ToggleDot,
+                    CornerRadius = UDim.new(1, 0)
+                })
+                
+                function Toggle:Set(value)
+                    self.Value = value
+                    TweenService:Create(ToggleIndicator, TweenInfo.new(0.2), {
+                        BackgroundColor3 = value and OrionLib.Theme.Accent or OrionLib.Theme.Border
+                    }):Play()
+                    
+                    TweenService:Create(ToggleDot, TweenInfo.new(0.2), {
+                        Position = value and UDim2.new(1, -11, 0.5, 0) or UDim2.new(0, 11, 0.5, 0)
+                    }):Play()
+                    
+                    toggleConfig.Callback(value)
+                end
+                
+                -- Click Event
+                ToggleFrame.MouseButton1Click:Connect(function()
+                    Toggle:Set(not Toggle.Value)
+                    RippleEffect(ToggleFrame)
+                end)
+                
+                -- Hover Effects
+                ToggleFrame.MouseEnter:Connect(function()
+                    TweenService:Create(ToggleFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            OrionLib.Theme.Tertiary.R * 255 + 10,
+                            OrionLib.Theme.Tertiary.G * 255 + 10,
+                            OrionLib.Theme.Tertiary.B * 255 + 10
+                        )
+                    }):Play()
+                end)
+                
+                ToggleFrame.MouseLeave:Connect(function()
+                    TweenService:Create(ToggleFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = OrionLib.Theme.Tertiary
+                    }):Play()
+                end)
+                
+                -- Set initial value
+                Toggle:Set(Toggle.Value)
+                
+                -- Save to flags
+                if toggleConfig.Flag then
+                    OrionLib.Flags[toggleConfig.Flag] = Toggle
+                end
+                
+                return Toggle
+            end
+            
+            -- Slider
+            function SectionFunctions:AddSlider(sliderConfig)
+                sliderConfig = sliderConfig or {}
+                sliderConfig.Name = sliderConfig.Name or "Slider"
+                sliderConfig.Min = sliderConfig.Min or 0
+                sliderConfig.Max = sliderConfig.Max or 100
+                sliderConfig.Default = sliderConfig.Default or 50
+                sliderConfig.Callback = sliderConfig.Callback or function() end
+                sliderConfig.Flag = sliderConfig.Flag or nil
+                
+                local Slider = {Value = sliderConfig.Default}
+                local dragging = false
+                
+                local SliderFrame = Create("Frame", {
+                    Parent = ContentContainer,
+                    BackgroundColor3 = OrionLib.Theme.Tertiary,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 0, 60),
+                    AutomaticSize = Enum.AutomaticSize.Y
+                })
+                
+                Create("UICorner", {
+                    Parent = SliderFrame,
+                    CornerRadius = UDim.new(0, 6)
+                })
+                
+                Create("UIStroke", {
+                    Parent = SliderFrame,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local SliderText = Create("TextLabel", {
+                    Parent = SliderFrame,
+                    Text = sliderConfig.Name,
+                    TextColor3 = OrionLib.Theme.Text,
+                    TextSize = 14,
+                    Font = Enum.Font.GothamSemibold,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 10, 0, 5),
+                    Size = UDim2.new(1, -20, 0, 20),
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local ValueText = Create("TextLabel", {
+                    Parent = SliderFrame,
+                    Text = tostring(Slider.Value),
+                    TextColor3 = OrionLib.Theme.Accent,
+                    TextSize = 14,
+                    Font = Enum.Font.GothamBold,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(1, -60, 0, 5),
+                    Size = UDim2.new(0, 50, 0, 20),
+                    TextXAlignment = Enum.TextXAlignment.Right
+                })
+                
+                local SliderTrack = Create("Frame", {
+                    Parent = SliderFrame,
+                    BackgroundColor3 = OrionLib.Theme.Border,
+                    BorderSizePixel = 0,
+                    Position = UDim2.new(0, 10, 0, 35),
+                    Size = UDim2.new(1, -20, 0, 8)
+                })
+                
+                Create("UICorner", {
+                    Parent = SliderTrack,
+                    CornerRadius = UDim.new(1, 0)
+                })
+                
+                local SliderFill = Create("Frame", {
+                    Parent = SliderTrack,
+                    BackgroundColor3 = OrionLib.Theme.Accent,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new((Slider.Value - sliderConfig.Min) / (sliderConfig.Max - sliderConfig.Min), 0, 1, 0)
+                })
+                
+                Create("UICorner", {
+                    Parent = SliderFill,
+                    CornerRadius = UDim.new(1, 0)
+                })
+                
+                local SliderButton = Create("TextButton", {
+                    Parent = SliderTrack,
+                    Text = "",
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((Slider.Value - sliderConfig.Min) / (sliderConfig.Max - sliderConfig.Min), -8, 0.5, -8),
+                    Size = UDim2.new(0, 16, 0, 16),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    AutoButtonColor = false
+                })
+                
+                Create("UICorner", {
+                    Parent = SliderButton,
+                    CornerRadius = UDim.new(1, 0)
+                })
+                
+                Create("UIStroke", {
+                    Parent = SliderButton,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 2
+                })
+                
+                function Slider:Set(value)
+                    value = math.clamp(value, sliderConfig.Min, sliderConfig.Max)
+                    self.Value = value
+                    
+                    local percent = (value - sliderConfig.Min) / (sliderConfig.Max - sliderConfig.Min)
+                    
+                    TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                        Size = UDim2.new(percent, 0, 1, 0)
+                    }):Play()
+                    
+                    TweenService:Create(SliderButton, TweenInfo.new(0.1), {
+                        Position = UDim2.new(percent, -8, 0.5, -8)
+                    }):Play()
+                    
+                    ValueText.Text = tostring(math.floor(value))
+                    sliderConfig.Callback(value)
+                end
+                
+                -- Drag Functionality
+                local function updateSlider(input)
+                    local pos = UDim2.new(
+                        math.clamp((input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X, 0, 1),
+                        0,
+                        0.5, -8
+                    )
+                    
+                    local percent = math.clamp((input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X, 0, 1)
+                    local value = sliderConfig.Min + (sliderConfig.Max - sliderConfig.Min) * percent
+                    
+                    Slider:Set(value)
+                end
+                
+                SliderButton.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                    end
+                end)
+                
+                SliderButton.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                UserInputService.InputChanged:Connect(function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        updateSlider(input)
+                    end
+                end)
+                
+                SliderTrack.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        updateSlider(input)
+                        dragging = true
+                    end
+                end)
+                
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                -- Initial set
+                Slider:Set(Slider.Value)
+                
+                -- Save to flags
+                if sliderConfig.Flag then
+                    OrionLib.Flags[sliderConfig.Flag] = Slider
+                end
+                
+                return Slider
+            end
+            
+            -- Dropdown
+            function SectionFunctions:AddDropdown(dropdownConfig)
+                dropdownConfig = dropdownConfig or {}
+                dropdownConfig.Name = dropdownConfig.Name or "Dropdown"
+                dropdownConfig.Options = dropdownConfig.Options or {"Option 1", "Option 2"}
+                dropdownConfig.Default = dropdownConfig.Default or dropdownConfig.Options[1]
+                dropdownConfig.Callback = dropdownConfig.Callback or function() end
+                dropdownConfig.Flag = dropdownConfig.Flag or nil
+                
+                local Dropdown = {
+                    Value = dropdownConfig.Default,
+                    Options = dropdownConfig.Options,
+                    Opened = false
+                }
+                
+                local DropdownFrame = Create("Frame", {
+                    Parent = ContentContainer,
+                    BackgroundColor3 = OrionLib.Theme.Tertiary,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 0, 35),
+                    ClipsDescendants = true
+                })
+                
+                Create("UICorner", {
+                    Parent = DropdownFrame,
+                    CornerRadius = UDim.new(0, 6)
+                })
+                
+                Create("UIStroke", {
+                    Parent = DropdownFrame,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local DropdownButton = Create("TextButton", {
+                    Parent = DropdownFrame,
+                    Text = "",
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 0, 35),
+                    AutoButtonColor = false
+                })
+                
+                local DropdownText = Create("TextLabel", {
+                    Parent = DropdownButton,
+                    Text = dropdownConfig.Name,
+                    TextColor3 = OrionLib.Theme.Text,
+                    TextSize = 14,
+                    Font = Enum.Font.GothamSemibold,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 10, 0, 0),
+                    Size = UDim2.new(0.7, -10, 1, 0),
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local SelectedText = Create("TextLabel", {
+                    Parent = DropdownButton,
+                    Text = Dropdown.Value,
+                    TextColor3 = OrionLib.Theme.Accent,
+                    TextSize = 13,
+                    Font = Enum.Font.GothamBold,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0.7, 0, 0, 0),
+                    Size = UDim2.new(0.3, -30, 1, 0),
+                    TextXAlignment = Enum.TextXAlignment.Right
+                })
+                
+                local Arrow = Create("ImageLabel", {
+                    Parent = DropdownButton,
+                    Image = "rbxassetid://6031094678",
+                    ImageColor3 = OrionLib.Theme.Accent,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(1, -25, 0.5, -8),
+                    Size = UDim2.new(0, 16, 0, 16),
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    Rotation = 0
+                })
+                
+                local OptionsFrame = Create("Frame", {
+                    Parent = DropdownFrame,
+                    BackgroundColor3 = OrionLib.Theme.Secondary,
+                    BorderSizePixel = 0,
+                    Position = UDim2.new(0, 5, 0, 40),
+                    Size = UDim2.new(1, -10, 0, 0),
+                    ClipsDescendants = true
+                })
+                
+                Create("UICorner", {
+                    Parent = OptionsFrame,
+                    CornerRadius = UDim.new(0, 6)
+                })
+                
+                Create("UIStroke", {
+                    Parent = OptionsFrame,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local OptionsList = Create("ScrollingFrame", {
+                    Parent = OptionsFrame,
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    CanvasSize = UDim2.new(0, 0, 0, 0),
+                    ScrollBarThickness = 3,
+                    ScrollBarImageColor3 = OrionLib.Theme.Accent
+                })
+                
+                Create("UIListLayout", {
+                    Parent = OptionsList,
+                    SortOrder = Enum.SortOrder.LayoutOrder,
+                    Padding = UDim.new(0, 2)
+                })
+                
+                Create("UIPadding", {
+                    Parent = OptionsList,
+                    PaddingTop = UDim.new(0, 5),
+                    PaddingBottom = UDim.new(0, 5),
+                    PaddingLeft = UDim.new(0, 5),
+                    PaddingRight = UDim.new(0, 5)
+                })
+                
+                function Dropdown:Set(value)
+                    if table.find(dropdownConfig.Options, value) then
+                        self.Value = value
+                        SelectedText.Text = value
+                        dropdownConfig.Callback(value)
+                    end
+                end
+                
+                function Dropdown:Refresh(options)
+                    dropdownConfig.Options = options or dropdownConfig.Options
+                    self.Options = dropdownConfig.Options
+                    
+                    -- Clear old options
+                    for _, child in pairs(OptionsList:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            child:Destroy()
+                        end
+                    end
+                    
+                    -- Add new options
+                    local totalHeight = 0
+                    for _, option in pairs(dropdownConfig.Options) do
+                        local OptionButton = Create("TextButton", {
+                            Parent = OptionsList,
+                            Text = option,
+                            TextColor3 = OrionLib.Theme.Text,
+                            TextSize = 13,
+                            Font = Enum.Font.Gotham,
+                            BackgroundColor3 = OrionLib.Theme.Tertiary,
+                            BorderSizePixel = 0,
+                            Size = UDim2.new(1, 0, 0, 30),
+                            AutoButtonColor = false
+                        })
+                        
+                        Create("UICorner", {
+                            Parent = OptionButton,
+                            CornerRadius = UDim.new(0, 4)
+                        })
+                        
+                        Create("UIStroke", {
+                            Parent = OptionButton,
+                            Color = OrionLib.Theme.Accent,
+                            Thickness = 1,
+                            Transparency = 0.5
+                        })
+                        
+                        OptionButton.MouseButton1Click:Connect(function()
+                            Dropdown:Set(option)
+                            Dropdown:Toggle()
+                            RippleEffect(OptionButton)
+                        end)
+                        
+                        OptionButton.MouseEnter:Connect(function()
+                            TweenService:Create(OptionButton, TweenInfo.new(0.2), {
+                                BackgroundColor3 = Color3.fromRGB(
+                                    OrionLib.Theme.Tertiary.R * 255 + 15,
+                                    OrionLib.Theme.Tertiary.G * 255 + 15,
+                                    OrionLib.Theme.Tertiary.B * 255 + 15
+                                )
+                            }):Play()
+                        end)
+                        
+                        OptionButton.MouseLeave:Connect(function()
+                            TweenService:Create(OptionButton, TweenInfo.new(0.2), {
+                                BackgroundColor3 = OrionLib.Theme.Tertiary
+                            }):Play()
+                        end)
+                        
+                        totalHeight = totalHeight + 32
+                    end
+                    
+                    OptionsList.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+                end
+                
+                function Dropdown:Toggle()
+                    self.Opened = not self.Opened
+                    
+                    if self.Opened then
+                        local totalHeight = math.min(#dropdownConfig.Options * 32 + 10, 150)
+                        TweenService:Create(DropdownFrame, TweenInfo.new(0.3), {
+                            Size = UDim2.new(1, 0, 0, 35 + totalHeight + 5)
+                        }):Play()
+                        TweenService:Create(OptionsFrame, TweenInfo.new(0.3), {
+                            Size = UDim2.new(1, -10, 0, totalHeight)
+                        }):Play()
+                        TweenService:Create(Arrow, TweenInfo.new(0.3), {
+                            Rotation = 180
+                        }):Play()
+                    else
+                        TweenService:Create(DropdownFrame, TweenInfo.new(0.3), {
+                            Size = UDim2.new(1, 0, 0, 35)
+                        }):Play()
+                        TweenService:Create(OptionsFrame, TweenInfo.new(0.3), {
+                            Size = UDim2.new(1, -10, 0, 0)
+                        }):Play()
+                        TweenService:Create(Arrow, TweenInfo.new(0.3), {
+                            Rotation = 0
+                        }):Play()
+                    end
+                end
+                
+                -- Hover Effects
+                DropdownButton.MouseEnter:Connect(function()
+                    TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            OrionLib.Theme.Tertiary.R * 255 + 10,
+                            OrionLib.Theme.Tertiary.G * 255 + 10,
+                            OrionLib.Theme.Tertiary.B * 255 + 10
+                        )
+                    }):Play()
+                end)
+                
+                DropdownButton.MouseLeave:Connect(function()
+                    TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = OrionLib.Theme.Tertiary
+                    }):Play()
+                end)
+                
+                -- Click Event
+                DropdownButton.MouseButton1Click:Connect(function()
+                    Dropdown:Toggle()
+                    RippleEffect(DropdownButton)
+                end)
+                
+                -- Initial setup
+                Dropdown:Refresh(dropdownConfig.Options)
+                Dropdown:Set(Dropdown.Value)
+                
+                -- Save to flags
+                if dropdownConfig.Flag then
+                    OrionLib.Flags[dropdownConfig.Flag] = Dropdown
+                end
+                
+                return Dropdown
+            end
+            
+            -- Label
+            function SectionFunctions:AddLabel(labelConfig)
+                labelConfig = labelConfig or {}
+                labelConfig.Text = labelConfig.Text or "Label"
+                
+                local Label = Create("TextLabel", {
+                    Parent = ContentContainer,
+                    Text = labelConfig.Text,
+                    TextColor3 = OrionLib.Theme.Text,
+                    TextSize = 14,
+                    Font = Enum.Font.Gotham,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 25),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextWrapped = true
+                })
+                
+                local LabelFunctions = {}
+                
+                function LabelFunctions:Set(newText)
+                    Label.Text = newText
+                end
+                
+                return LabelFunctions
+            end
+            
+            -- Textbox
+            function SectionFunctions:AddTextbox(textboxConfig)
+                textboxConfig = textboxConfig or {}
+                textboxConfig.Name = textboxConfig.Name or "Textbox"
+                textboxConfig.Placeholder = textboxConfig.Placeholder or "Enter text..."
+                textboxConfig.Callback = textboxConfig.Callback or function() end
+                
+                local TextboxFrame = Create("Frame", {
+                    Parent = ContentContainer,
+                    BackgroundColor3 = OrionLib.Theme.Tertiary,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, 0, 0, 35)
+                })
+                
+                Create("UICorner", {
+                    Parent = TextboxFrame,
+                    CornerRadius = UDim.new(0, 6)
+                })
+                
+                Create("UIStroke", {
+                    Parent = TextboxFrame,
+                    Color = OrionLib.Theme.Accent,
+                    Thickness = 1
+                })
+                
+                local Textbox = Create("TextBox", {
+                    Parent = TextboxFrame,
+                    Text = "",
+                    PlaceholderText = textboxConfig.Placeholder,
+                    TextColor3 = OrionLib.Theme.Text,
+                    PlaceholderColor3 = OrionLib.Theme.TextSecondary,
+                    TextSize = 14,
+                    Font = Enum.Font.Gotham,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 10, 0, 0),
+                    Size = UDim2.new(1, -20, 1, 0),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    ClearTextOnFocus = false
+                })
+                
+                Textbox.FocusLost:Connect(function(enterPressed)
+                    if enterPressed then
+                        textboxConfig.Callback(Textbox.Text)
+                    end
+                end)
+                
+                -- Hover Effect
+                TextboxFrame.MouseEnter:Connect(function()
+                    TweenService:Create(TextboxFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            OrionLib.Theme.Tertiary.R * 255 + 10,
+                            OrionLib.Theme.Tertiary.G * 255 + 10,
+                            OrionLib.Theme.Tertiary.B * 255 + 10
+                        )
+                    }):Play()
+                end)
+                
+                TextboxFrame.MouseLeave:Connect(function()
+                    TweenService:Create(TextboxFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = OrionLib.Theme.Tertiary
+                    }):Play()
+                end)
+            end
+            
+            return SectionFunctions
+        end
+        
+        -- Direkte Elemente ohne Section
+        function TabFunctions:AddButton(btnConfig)
+            return self:AddSection(""):AddButton(btnConfig)
+        end
+        
+        function TabFunctions:AddToggle(toggleConfig)
+            return self:AddSection(""):AddToggle(toggleConfig)
+        end
+        
+        function TabFunctions:AddSlider(sliderConfig)
+            return self:AddSection(""):AddSlider(sliderConfig)
+        end
+        
+        function TabFunctions:AddDropdown(dropdownConfig)
+            return self:AddSection(""):AddDropdown(dropdownConfig)
+        end
+        
+        function TabFunctions:AddLabel(labelConfig)
+            return self:AddSection(""):AddLabel(labelConfig)
+        end
+        
+        function TabFunctions:AddTextbox(textboxConfig)
+            return self:AddSection(""):AddTextbox(textboxConfig)
+        end
+        
+        return TabFunctions
+    end
+    
+    -- Window Functions zurückgeben
+    local WindowFunctions = {}
+    
+    function WindowFunctions:MakeTab(tabConfig)
+        tabConfig = tabConfig or {}
+        tabConfig.Name = tabConfig.Name or "Tab"
+        return CreateTab(tabConfig.Name, tabConfig.Icon)
+    end
+    
+    function WindowFunctions:Destroy()
+        MainWindow:Destroy()
+    end
+    
+    -- Update Content Area size
+    ContentArea:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+        ContentArea.ScrollBarThickness = 3
+    end)
+    
+    ContentArea.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        ContentArea.CanvasSize = UDim2.new(0, 0, 0, ContentArea.UIListLayout.AbsoluteContentSize.Y + 20)
+    end)
+    
+    return WindowFunctions
 end
 
 -- Notification System
-function RayfieldLibrary:Notify(notificationData)
-	task.spawn(function()
-		local theme = getTheme()
-		
-		-- Create notification frame
-		local notification = Instance.new("Frame")
-		notification.Name = "Notification_" .. tick()
-		notification.Size = UDim2.new(0, 300, 0, 80)
-		notification.Position = UDim2.new(1, 10, 0, 10)
-		notification.BackgroundColor3 = theme.Card
-		notification.BorderSizePixel = 0
-		notification.ClipsDescendants = true
-		
-		local UICorner = Instance.new("UICorner")
-		UICorner.CornerRadius = UDim.new(0, 8)
-		UICorner.Parent = notification
-		
-		local UIStroke = Instance.new("UIStroke")
-		UIStroke.Color = theme.Primary
-		UIStroke.Thickness = 2
-		UIStroke.Parent = notification
-		
-		local title = Instance.new("TextLabel")
-		title.Name = "Title"
-		title.Text = notificationData.Title or "Notification"
-		title.Size = UDim2.new(1, -20, 0, 30)
-		title.Position = UDim2.new(0, 10, 0, 10)
-		title.BackgroundTransparency = 1
-		title.TextColor3 = theme.Text
-		title.TextXAlignment = Enum.TextXAlignment.Left
-		title.Font = Enum.Font.GothamSemibold
-		title.TextSize = 14
-		title.Parent = notification
-		
-		local content = Instance.new("TextLabel")
-		content.Name = "Content"
-		content.Text = notificationData.Content or ""
-		content.Size = UDim2.new(1, -20, 1, -50)
-		content.Position = UDim2.new(0, 10, 0, 40)
-		content.BackgroundTransparency = 1
-		content.TextColor3 = theme.TextSecondary
-		content.TextXAlignment = Enum.TextXAlignment.Left
-		content.TextYAlignment = Enum.TextYAlignment.Top
-		content.Font = Enum.Font.Gotham
-		content.TextSize = 12
-		content.TextWrapped = true
-		content.Parent = notification
-		
-		notification.Parent = Notifications
-		
-		-- Animation
-		createTween(notification, {
-			Position = UDim2.new(1, -310, 0, 10)
-		}):Play()
-		
-		-- Auto remove
-		task.wait(notificationData.Duration or 5)
-		
-		createTween(notification, {
-			Position = UDim2.new(1, 10, 0, 10),
-			BackgroundTransparency = 1
-		}):Play()
-		
-		task.wait(0.5)
-		notification:Destroy()
-	end)
+function OrionLib:MakeNotification(notificationConfig)
+    notificationConfig = notificationConfig or {}
+    notificationConfig.Name = notificationConfig.Name or "Notification"
+    notificationConfig.Content = notificationConfig.Content or "Message"
+    notificationConfig.Time = notificationConfig.Time or 5
+    
+    local Notification = Create("Frame", {
+        Parent = Orion,
+        BackgroundColor3 = OrionLib.Theme.Secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, 10, 1, -50),
+        Size = UDim2.new(0, 300, 0, 0),
+        AnchorPoint = Vector2.new(1, 1),
+        ClipsDescendants = true
+    })
+    
+    Create("UICorner", {
+        Parent = Notification,
+        CornerRadius = UDim.new(0, 8)
+    })
+    
+    Create("UIStroke", {
+        Parent = Notification,
+        Color = OrionLib.Theme.Accent,
+        Thickness = 2
+    })
+    
+    local Title = Create("TextLabel", {
+        Parent = Notification,
+        Text = notificationConfig.Name,
+        TextColor3 = OrionLib.Theme.Accent,
+        TextSize = 16,
+        Font = Enum.Font.GothamBold,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 15, 0, 10),
+        Size = UDim2.new(1, -30, 0, 20),
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local Content = Create("TextLabel", {
+        Parent = Notification,
+        Text = notificationConfig.Content,
+        TextColor3 = OrionLib.Theme.Text,
+        TextSize = 14,
+        Font = Enum.Font.Gotham,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 15, 0, 35),
+        Size = UDim2.new(1, -30, 0, 0),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextWrapped = true,
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    -- Calculate height
+    Content:GetPropertyChangedSignal("TextBounds"):Wait()
+    local textHeight = Content.TextBounds.Y
+    local totalHeight = math.max(70, 55 + textHeight)
+    
+    -- Animate in
+    TweenService:Create(Notification, TweenInfo.new(0.3), {
+        Size = UDim2.new(0, 300, 0, totalHeight),
+        Position = UDim2.new(1, -10, 1, -(totalHeight + 10))
+    }):Play()
+    
+    -- Wait and animate out
+    wait(notificationConfig.Time)
+    
+    TweenService:Create(Notification, TweenInfo.new(0.3), {
+        Size = UDim2.new(0, 300, 0, 0),
+        Position = UDim2.new(1, 10, 1, -50)
+    }):Play()
+    
+    wait(0.3)
+    Notification:Destroy()
 end
 
--- Window Creation
-function RayfieldLibrary:CreateWindow(settings)
-	-- Apply settings
-	if Topbar:FindFirstChild("Title") then
-		Topbar.Title.Text = settings.Name or "Rayfield Pink"
-	end
-	
-	-- Apply theme
-	if settings.Theme and RayfieldLibrary.Themes[settings.Theme] then
-		applyTheme(settings.Theme)
-	else
-		applyTheme("PinkElegance")
-	end
-	
-	-- Loading animation
-	Rayfield.Enabled = true
-	Main.Visible = true
-	
-	if LoadingFrame then
-		LoadingFrame.Visible = true
-		createTween(Main, {Size = UDim2.new(0, 500, 0, 400)}):Play()
-		task.wait(1)
-		LoadingFrame.Visible = false
-	else
-		createTween(Main, {Size = UDim2.new(0, 500, 0, 400)}):Play()
-	end
-	
-	Topbar.Visible = true
-	Elements.Visible = true
-	
-	createTween(Topbar, {BackgroundTransparency = 0}):Play()
-	
-	local Window = {}
-	
-	-- Tab Creation
-	function Window:CreateTab(name, icon)
-		-- Create tab button
-		local tabButton = Instance.new("Frame")
-		tabButton.Name = name
-		tabButton.Size = UDim2.new(1, -10, 0, 40)
-		tabButton.BackgroundColor3 = getTheme().Card
-		tabButton.BorderSizePixel = 0
-		
-		local UICorner = Instance.new("UICorner")
-		UICorner.CornerRadius = UDim.new(0, 6)
-		UICorner.Parent = tabButton
-		
-		local title = Instance.new("TextLabel")
-		title.Name = "Title"
-		title.Text = name
-		title.Size = UDim2.new(1, -20, 1, 0)
-		title.Position = UDim2.new(0, 10, 0, 0)
-		title.BackgroundTransparency = 1
-		title.TextColor3 = getTheme().TextSecondary
-		title.TextXAlignment = Enum.TextXAlignment.Left
-		title.Font = Enum.Font.GothamSemibold
-		title.TextSize = 14
-		title.Parent = tabButton
-		
-		local interact = Instance.new("TextButton")
-		interact.Name = "Interact"
-		interact.Size = UDim2.new(1, 0, 1, 0)
-		interact.BackgroundTransparency = 1
-		interact.Text = ""
-		interact.Parent = tabButton
-		
-		tabButton.Parent = TabList
-		
-		-- Create tab page
-		local tabPage = Instance.new("ScrollingFrame")
-		tabPage.Name = name
-		tabPage.Size = UDim2.new(1, 0, 1, 0)
-		tabPage.BackgroundTransparency = 1
-		tabPage.ScrollBarThickness = 4
-		tabPage.ScrollBarImageColor3 = getTheme().Primary
-		tabPage.Visible = false
-		
-		local uiListLayout = Instance.new("UIListLayout")
-		uiListLayout.Padding = UDim.new(0, 10)
-		uiListLayout.Parent = tabPage
-		
-		tabPage.Parent = Elements
-		
-		local Tab = {}
-		
-		-- Button Element
-		function Tab:CreateButton(buttonSettings)
-			local button = Instance.new("Frame")
-			button.Name = buttonSettings.Name
-			button.Size = UDim2.new(1, -20, 0, 40)
-			button.BackgroundColor3 = getTheme().Card
-			button.BorderSizePixel = 0
-			
-			local UICorner = Instance.new("UICorner")
-			UICorner.CornerRadius = UDim.new(0, 6)
-			UICorner.Parent = button
-			
-			local title = Instance.new("TextLabel")
-			title.Name = "Title"
-			title.Text = buttonSettings.Name
-			title.Size = UDim2.new(1, -20, 1, 0)
-			title.Position = UDim2.new(0, 10, 0, 0)
-			title.BackgroundTransparency = 1
-			title.TextColor3 = getTheme().Text
-			title.TextXAlignment = Enum.TextXAlignment.Left
-			title.Font = Enum.Font.GothamSemibold
-			title.TextSize = 14
-			title.Parent = button
-			
-			local interact = Instance.new("TextButton")
-			interact.Name = "Interact"
-			interact.Size = UDim2.new(1, 0, 1, 0)
-			interact.BackgroundTransparency = 1
-			interact.Text = ""
-			interact.Parent = button
-			
-			button.Parent = tabPage
-			
-			-- Hover effect
-			applyHoverEffect(button, getTheme().Card, getTheme().CardHover)
-			
-			-- Click handler
-			interact.MouseButton1Click:Connect(function()
-				-- Press animation
-				createTween(button, {
-					BackgroundColor3 = getTheme().Primary,
-					BackgroundTransparency = 0.8
-				}):Play()
-				
-				task.wait(0.1)
-				
-				createTween(button, {
-					BackgroundColor3 = getTheme().Card,
-					BackgroundTransparency = 0
-				}):Play()
-				
-				-- Execute callback
-				local success, err = pcall(buttonSettings.Callback)
-				if not success then
-					warn("Button callback error:", err)
-				end
-			end)
-			
-			local buttonValue = {}
-			function buttonValue:Set(newText)
-				title.Text = newText
-				button.Name = newText
-			end
-			
-			return buttonValue
-		end
-		
-		-- Toggle Element
-		function Tab:CreateToggle(toggleSettings)
-			local toggle = Instance.new("Frame")
-			toggle.Name = toggleSettings.Name
-			toggle.Size = UDim2.new(1, -20, 0, 40)
-			toggle.BackgroundColor3 = getTheme().Card
-			toggle.BorderSizePixel = 0
-			
-			local UICorner = Instance.new("UICorner")
-			UICorner.CornerRadius = UDim.new(0, 6)
-			UICorner.Parent = toggle
-			
-			local title = Instance.new("TextLabel")
-			title.Name = "Title"
-			title.Text = toggleSettings.Name
-			title.Size = UDim2.new(1, -80, 1, 0)
-			title.Position = UDim2.new(0, 10, 0, 0)
-			title.BackgroundTransparency = 1
-			title.TextColor3 = getTheme().Text
-			title.TextXAlignment = Enum.TextXAlignment.Left
-			title.Font = Enum.Font.GothamSemibold
-			title.TextSize = 14
-			title.Parent = toggle
-			
-			local switch = Instance.new("Frame")
-			switch.Name = "Switch"
-			switch.Size = UDim2.new(0, 50, 0, 25)
-			switch.Position = UDim2.new(1, -60, 0.5, -12.5)
-			switch.BackgroundColor3 = getTheme().Medium
-			switch.BorderSizePixel = 0
-			
-			local switchCorner = Instance.new("UICorner")
-			switchCorner.CornerRadius = UDim.new(1, 0)
-			switchCorner.Parent = switch
-			
-			local indicator = Instance.new("Frame")
-			indicator.Name = "Indicator"
-			indicator.Size = UDim2.new(0, 20, 0, 20)
-			indicator.Position = UDim2.new(0, 3, 0.5, -10)
-			indicator.BackgroundColor3 = getTheme().TextSecondary
-			indicator.BorderSizePixel = 0
-			indicator.AnchorPoint = Vector2.new(0, 0.5)
-			
-			local indicatorCorner = Instance.new("UICorner")
-			indicatorCorner.CornerRadius = UDim.new(1, 0)
-			indicatorCorner.Parent = indicator
-			
-			indicator.Parent = switch
-			switch.Parent = toggle
-			
-			local interact = Instance.new("TextButton")
-			interact.Name = "Interact"
-			interact.Size = UDim2.new(1, 0, 1, 0)
-			interact.BackgroundTransparency = 1
-			interact.Text = ""
-			interact.Parent = toggle
-			
-			toggle.Parent = tabPage
-			
-			local isToggled = toggleSettings.CurrentValue or false
-			
-			-- Update toggle state
-			local function updateToggle()
-				if isToggled then
-					createTween(indicator, {
-						Position = UDim2.new(1, -23, 0.5, -10),
-						BackgroundColor3 = getTheme().Primary
-					}):Play()
-					createTween(switch, {
-						BackgroundColor3 = Color3.fromRGB(
-							math.floor(getTheme().Primary.R * 255 * 0.3),
-							math.floor(getTheme().Primary.G * 255 * 0.3),
-							math.floor(getTheme().Primary.B * 255 * 0.3)
-						)
-					}):Play()
-				else
-					createTween(indicator, {
-						Position = UDim2.new(0, 3, 0.5, -10),
-						BackgroundColor3 = getTheme().TextSecondary
-					}):Play()
-					createTween(switch, {
-						BackgroundColor3 = getTheme().Medium
-					}):Play()
-				end
-			end
-			
-			updateToggle()
-			
-			-- Click handler
-			interact.MouseButton1Click:Connect(function()
-				isToggled = not isToggled
-				updateToggle()
-				
-				local success, err = pcall(function()
-					toggleSettings.Callback(isToggled)
-				end)
-				
-				if not success then
-					warn("Toggle callback error:", err)
-				end
-			end)
-			
-			-- Hover effect
-			applyHoverEffect(toggle, getTheme().Card, getTheme().CardHover)
-			
-			local toggleValue = {}
-			function toggleValue:Set(value)
-				isToggled = value
-				updateToggle()
-			end
-			
-			function toggleValue:Get()
-				return isToggled
-			end
-			
-			return toggleValue
-		end
-		
-		-- Click handler for tab button
-		interact.MouseButton1Click:Connect(function()
-			-- Hide all tab pages
-			for _, page in pairs(Elements:GetChildren()) do
-				if page:IsA("ScrollingFrame") then
-					page.Visible = false
-				end
-			end
-			
-			-- Show this tab page
-			tabPage.Visible = true
-			
-			-- Update tab button appearance
-			for _, btn in pairs(TabList:GetChildren()) do
-				if btn:IsA("Frame") and btn.Name ~= "Template" then
-					createTween(btn, {
-						BackgroundColor3 = getTheme().Card
-					}):Play()
-					if btn:FindFirstChild("Title") then
-						createTween(btn.Title, {
-							TextColor3 = getTheme().TextSecondary
-						}):Play()
-					end
-				end
-			end
-			
-			createTween(tabButton, {
-				BackgroundColor3 = getTheme().Primary
-			}):Play()
-			if tabButton:FindFirstChild("Title") then
-				createTween(tabButton.Title, {
-					TextColor3 = Color3.new(1, 1, 1)
-				}):Play()
-			end
-		end)
-		
-		-- Show first tab by default
-		if #TabList:GetChildren() == 1 then
-			tabPage.Visible = true
-			createTween(tabButton, {
-				BackgroundColor3 = getTheme().Primary
-			}):Play()
-			if tabButton:FindFirstChild("Title") then
-				tabButton.Title.TextColor3 = Color3.new(1, 1, 1)
-			end
-		end
-		
-		return Tab
-	end
-	
-	-- Theme Changer
-	function Window:ChangeTheme(themeName)
-		local success = applyTheme(themeName)
-		if success then
-			RayfieldLibrary:Notify({
-				Title = "Theme Changed",
-				Content = string.format("Changed theme to %s", themeName),
-				Duration = 3
-			})
-		end
-		return success
-	end
-	
-	-- Window Controls
-	function Window:Minimize()
-		createTween(Main, {
-			Size = UDim2.new(0, 500, 0, 45)
-		}):Play()
-	end
-	
-	function Window:Maximize()
-		createTween(Main, {
-			Size = UDim2.new(0, 500, 0, 400)
-		}):Play()
-	end
-	
-	function Window:Hide()
-		createTween(Main, {
-			Position = UDim2.new(0.5, 0, 1.5, 0)
-		}):Play()
-		RayfieldLibrary:Notify({
-			Title = "Interface Hidden",
-			Content = "Press " .. (settings.ToggleKey or "RightShift") .. " to show",
-			Duration = 5
-		})
-	end
-	
-	function Window:Show()
-		createTween(Main, {
-			Position = UDim2.new(0.5, 0, 0.5, 0)
-		}):Play()
-	end
-	
-	-- Setup window controls
-	if Topbar:FindFirstChild("Hide") then
-		Topbar.Hide.MouseButton1Click:Connect(function()
-			Window:Hide()
-		end)
-	end
-	
-	if Topbar:FindFirstChild("ChangeSize") then
-		Topbar.ChangeSize.MouseButton1Click:Connect(function()
-			if Main.Size.Y.Offset > 100 then
-				Window:Minimize()
-			else
-				Window:Maximize()
-			end
-		end)
-	end
-	
-	-- Keybind to show/hide
-	if settings.ToggleKey then
-		UserInputService.InputBegan:Connect(function(input, processed)
-			if not processed and input.KeyCode == Enum.KeyCode[settings.ToggleKey] then
-				if Main.Position.Y.Offset > 1 then
-					Window:Show()
-				else
-					Window:Hide()
-				end
-			end
-		end)
-	end
-	
-	-- Make draggable
-	local dragging = false
-	local dragStart, startPos
-	
-	Topbar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = Main.Position
-			
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local delta = input.Position - dragStart
-			Main.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-	
-	-- Send welcome notification
-	task.wait(1)
-	RayfieldLibrary:Notify({
-		Title = "Welcome",
-		Content = string.format("%s loaded successfully!", settings.Name or "Rayfield Pink"),
-		Duration = 5
-	})
-	
-	return Window
+-- Init function
+function OrionLib:Init()
+    self:MakeNotification({
+        Name = "Orion Lib",
+        Content = "Library loaded successfully!",
+        Time = 3
+    })
 end
 
--- Initialize library functions
-function RayfieldLibrary:LoadConfiguration()
-	RayfieldLibrary:Notify({
-		Title = "Configuration",
-		Content = "Configuration system loaded",
-		Duration = 3
-	})
+-- Destroy function
+function OrionLib:Destroy()
+    Orion:Destroy()
 end
 
-function RayfieldLibrary:SetVisibility(visible)
-	if visible then
-		Rayfield.Enabled = true
-		createTween(Main, {BackgroundTransparency = 0}):Play()
-	else
-		createTween(Main, {BackgroundTransparency = 1}):Play()
-		task.wait(0.3)
-		Rayfield.Enabled = false
-	end
-end
-
-function RayfieldLibrary:Destroy()
-	createTween(Main, {
-		Size = UDim2.new(0, 0, 0, 0),
-		BackgroundTransparency = 1
-	}):Play()
-	
-	task.wait(0.5)
-	Rayfield:Destroy()
-end
-
--- Return the library
-return RayfieldLibrary
+return OrionLib
