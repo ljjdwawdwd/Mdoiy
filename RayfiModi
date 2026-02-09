@@ -1,12 +1,11 @@
 --[[
-    Rayfield Pink Interface - Vollständig Funktionsfähig
-    Getestet & Bug-Free
+    Rayfield Pink Interface - Direkt ausführbar
+    Keine externen Abhängigkeiten
 ]]
 
 -- Services
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
 
 -- Create the Rayfield table
 local Rayfield = {}
@@ -87,57 +86,6 @@ local function CreateTextLabel(parent, text, size, position, textSize, bold)
     return label
 end
 
--- Create Notification Function (Standalone)
-function Rayfield:Notify(settings)
-    local ScreenGui = game.CoreGui:FindFirstChild("RayfieldPink")
-    if not ScreenGui then
-        ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "RayfieldPink"
-        ScreenGui.Parent = game.CoreGui
-    end
-    
-    local Notification = CreateRoundedFrame(ScreenGui,
-        UDim2.new(0, 300, 0, 80),
-        UDim2.new(1, 10, 0, 10),
-        GetTheme().Card
-    )
-    Notification.Name = "Notification"
-    Notification.ZIndex = 1000
-    
-    local Border = Instance.new("UIStroke")
-    Border.Color = GetTheme().Primary
-    Border.Thickness = 2
-    Border.Parent = Notification
-    
-    CreateTextLabel(Notification, settings.Title or "Notification",
-        UDim2.new(1, -20, 0, 30),
-        UDim2.new(0, 10, 0, 10),
-        16, true
-    )
-    
-    CreateTextLabel(Notification, settings.Content or "",
-        UDim2.new(1, -20, 1, -40),
-        UDim2.new(0, 10, 0, 40),
-        14, false
-    )
-    
-    -- Animation
-    CreateTween(Notification, {
-        Position = UDim2.new(1, -310, 0, 10)
-    }):Play()
-    
-    -- Auto remove
-    task.wait(settings.Duration or 5)
-    
-    CreateTween(Notification, {
-        Position = UDim2.new(1, 10, 0, 10),
-        BackgroundTransparency = 1
-    }):Play()
-    
-    task.wait(0.3)
-    Notification:Destroy()
-end
-
 -- Main CreateWindow Function
 function Rayfield.CreateWindow(settings)
     settings = settings or {}
@@ -148,11 +96,14 @@ function Rayfield.CreateWindow(settings)
     ScreenGui.DisplayOrder = 999
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
+    -- Protection if available
     if syn and syn.protect_gui then
         syn.protect_gui(ScreenGui)
+    elseif gethui then
+        ScreenGui.Parent = gethui()
+    else
+        ScreenGui.Parent = game.CoreGui
     end
-    
-    ScreenGui.Parent = game.CoreGui
     
     -- Main Container
     local Main = CreateRoundedFrame(ScreenGui, 
@@ -400,15 +351,17 @@ function Rayfield.CreateWindow(settings)
         end
         
         -- Create Button Element
-        function Tab:CreateButton(settings)
+        function Tab:CreateButton(buttonSettings)
+            buttonSettings = buttonSettings or {}
+            
             local Button = CreateRoundedFrame(TabContent,
                 UDim2.new(1, 0, 0, 40),
                 UDim2.new(0, 0, 0, 0),
                 GetTheme().Card
             )
-            Button.Name = settings.Name
+            Button.Name = buttonSettings.Name or "Button"
             
-            local ButtonTitle = CreateTextLabel(Button, settings.Name,
+            local ButtonTitle = CreateTextLabel(Button, buttonSettings.Name or "Button",
                 UDim2.new(1, -20, 1, 0),
                 UDim2.new(0, 10, 0, 0),
                 14, true
@@ -437,8 +390,8 @@ function Rayfield.CreateWindow(settings)
                 CreateTween(Button, {BackgroundColor3 = GetTheme().Card}):Play()
                 
                 -- Execute callback
-                if settings.Callback then
-                    pcall(settings.Callback)
+                if buttonSettings.Callback then
+                    pcall(buttonSettings.Callback)
                 end
             end)
             
@@ -452,15 +405,17 @@ function Rayfield.CreateWindow(settings)
         end
         
         -- Create Toggle Element
-        function Tab:CreateToggle(settings)
+        function Tab:CreateToggle(toggleSettings)
+            toggleSettings = toggleSettings or {}
+            
             local Toggle = CreateRoundedFrame(TabContent,
                 UDim2.new(1, 0, 0, 40),
                 UDim2.new(0, 0, 0, 0),
                 GetTheme().Card
             )
-            Toggle.Name = settings.Name
+            Toggle.Name = toggleSettings.Name or "Toggle"
             
-            local ToggleTitle = CreateTextLabel(Toggle, settings.Name,
+            local ToggleTitle = CreateTextLabel(Toggle, toggleSettings.Name or "Toggle",
                 UDim2.new(1, -80, 1, 0),
                 UDim2.new(0, 10, 0, 0),
                 14, true
@@ -488,7 +443,7 @@ function Rayfield.CreateWindow(settings)
             ToggleInteract.Text = ""
             ToggleInteract.Parent = Toggle
             
-            local State = settings.CurrentValue or false
+            local State = toggleSettings.CurrentValue or false
             
             local function UpdateToggle()
                 if State then
@@ -531,8 +486,8 @@ function Rayfield.CreateWindow(settings)
                 UpdateToggle()
                 
                 -- Execute callback
-                if settings.Callback then
-                    pcall(settings.Callback, State)
+                if toggleSettings.Callback then
+                    pcall(toggleSettings.Callback, State)
                 end
             end)
             
@@ -550,21 +505,23 @@ function Rayfield.CreateWindow(settings)
         end
         
         -- Create Slider Element
-        function Tab:CreateSlider(settings)
+        function Tab:CreateSlider(sliderSettings)
+            sliderSettings = sliderSettings or {}
+            
             local Slider = CreateRoundedFrame(TabContent,
                 UDim2.new(1, 0, 0, 60),
                 UDim2.new(0, 0, 0, 0),
                 GetTheme().Card
             )
-            Slider.Name = settings.Name
+            Slider.Name = sliderSettings.Name or "Slider"
             
-            local SliderTitle = CreateTextLabel(Slider, settings.Name,
+            local SliderTitle = CreateTextLabel(Slider, sliderSettings.Name or "Slider",
                 UDim2.new(1, -20, 0, 20),
                 UDim2.new(0, 10, 0, 5),
                 14, true
             )
             
-            local SliderValue = CreateTextLabel(Slider, tostring(settings.CurrentValue or settings.Range[1]),
+            local SliderValue = CreateTextLabel(Slider, tostring(sliderSettings.CurrentValue or (sliderSettings.Range and sliderSettings.Range[1]) or 0),
                 UDim2.new(0, 60, 0, 20),
                 UDim2.new(1, -70, 0, 5),
                 14, false
@@ -594,16 +551,17 @@ function Rayfield.CreateWindow(settings)
             SliderInteract.Text = ""
             SliderInteract.Parent = Slider
             
-            local CurrentValue = settings.CurrentValue or settings.Range[1]
+            local CurrentValue = sliderSettings.CurrentValue or (sliderSettings.Range and sliderSettings.Range[1]) or 0
+            local Range = sliderSettings.Range or {0, 100}
             local IsDragging = false
             
             local function UpdateSlider(value)
-                value = math.clamp(value, settings.Range[1], settings.Range[2])
+                value = math.clamp(value, Range[1], Range[2])
                 CurrentValue = value
                 
-                local percentage = (value - settings.Range[1]) / (settings.Range[2] - settings.Range[1])
+                local percentage = (value - Range[1]) / (Range[2] - Range[1])
                 SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
-                SliderValue.Text = string.format("%.1f", value) .. (settings.Suffix or "")
+                SliderValue.Text = string.format("%.1f", value) .. (sliderSettings.Suffix or "")
             end
             
             UpdateSlider(CurrentValue)
@@ -632,19 +590,18 @@ function Rayfield.CreateWindow(settings)
                         0, 1
                     )
                     
-                    local newValue = settings.Range[1] + 
-                                    relativeX * (settings.Range[2] - settings.Range[1])
+                    local newValue = Range[1] + relativeX * (Range[2] - Range[1])
                     
                     -- Apply increment
-                    if settings.Increment then
-                        newValue = math.floor(newValue / settings.Increment + 0.5) * settings.Increment
+                    if sliderSettings.Increment then
+                        newValue = math.floor(newValue / sliderSettings.Increment + 0.5) * sliderSettings.Increment
                     end
                     
                     UpdateSlider(newValue)
                     
                     -- Execute callback
-                    if settings.Callback then
-                        pcall(settings.Callback, newValue)
+                    if sliderSettings.Callback then
+                        pcall(sliderSettings.Callback, newValue)
                     end
                 end
             end)
@@ -652,8 +609,8 @@ function Rayfield.CreateWindow(settings)
             local SliderObject = {}
             function SliderObject:Set(value)
                 UpdateSlider(value)
-                if settings.Callback then
-                    pcall(settings.Callback, value)
+                if sliderSettings.Callback then
+                    pcall(sliderSettings.Callback, value)
                 end
             end
             
@@ -666,6 +623,8 @@ function Rayfield.CreateWindow(settings)
         
         -- Create Label Element
         function Tab:CreateLabel(text)
+            text = text or "Label"
+            
             local Label = CreateRoundedFrame(TabContent,
                 UDim2.new(1, 0, 0, 30),
                 UDim2.new(0, 0, 0, 0),
@@ -724,6 +683,8 @@ function Rayfield.CreateWindow(settings)
     
     -- Notification Function for Window
     function Window:Notify(settings)
+        settings = settings or {}
+        
         local Notification = CreateRoundedFrame(ScreenGui,
             UDim2.new(0, 300, 0, 80),
             UDim2.new(1, 10, 0, 10),
@@ -790,5 +751,115 @@ function Rayfield.CreateWindow(settings)
     return Window
 end
 
--- Return the library
-return Rayfield
+-- Example Usage Code (Kopiere alles ab hier)
+print("=== Rayfield Pink Interface ===")
+print("Fenster wird erstellt...")
+
+-- Create the window
+local Window = Rayfield.CreateWindow({
+    Name = "Mein Pink Interface",
+    Theme = "PinkElegance",
+    ToggleKey = "RightShift"
+})
+
+-- Create first tab
+local MainTab = Window:CreateTab("Hauptmenü")
+
+-- Add a button
+local TestButton = MainTab:CreateButton({
+    Name = "Test Button",
+    Callback = function()
+        print("Button wurde geklickt!")
+        Window:Notify({
+            Title = "Erfolg",
+            Content = "Button funktioniert perfekt!",
+            Duration = 3
+        })
+    end
+})
+
+-- Add a toggle
+local MyToggle = MainTab:CreateToggle({
+    Name = "Feature aktivieren",
+    CurrentValue = false,
+    Callback = function(value)
+        print("Toggle ist jetzt:", value)
+        if value then
+            Window:Notify({
+                Title = "Feature",
+                Content = "Feature wurde aktiviert!",
+                Duration = 2
+            })
+        else
+            Window:Notify({
+                Title = "Feature",
+                Content = "Feature wurde deaktiviert!",
+                Duration = 2
+            })
+        end
+    end
+})
+
+-- Add a slider
+local SpeedSlider = MainTab:CreateSlider({
+    Name = "Geschwindigkeit",
+    Range = {0, 100},
+    Increment = 5,
+    Suffix = "%",
+    CurrentValue = 50,
+    Callback = function(value)
+        print("Geschwindigkeit:", value)
+    end
+})
+
+-- Add a label
+local WelcomeLabel = MainTab:CreateLabel("Willkommen zum Pink Interface!")
+
+-- Create second tab
+local SettingsTab = Window:CreateTab("Einstellungen")
+
+-- Theme switcher
+SettingsTab:CreateButton({
+    Name = "Zu Neon Theme wechseln",
+    Callback = function()
+        Window:ChangeTheme("PinkNeon")
+        Window:Notify({
+            Title = "Theme geändert",
+            Content = "Jetzt im Neon Theme!",
+            Duration = 2
+        })
+    end
+})
+
+SettingsTab:CreateButton({
+    Name = "Zu Pink Theme wechseln",
+    Callback = function()
+        Window:ChangeTheme("PinkElegance")
+        Window:Notify({
+            Title = "Theme geändert",
+            Content = "Jetzt im Pink Theme!",
+            Duration = 2
+        })
+    end
+})
+
+-- Hide/show window
+SettingsTab:CreateButton({
+    Name = "Fenster verstecken",
+    Callback = function()
+        Window:Hide()
+        task.wait(2)
+        Window:Show()
+    end
+})
+
+SettingsTab:CreateButton({
+    Name = "Fenster minimieren",
+    Callback = function()
+        -- This will trigger the minimize button
+        game:GetService("CoreGui").RayfieldPink.Main.Topbar.Minimize:Fire()
+    end
+})
+
+print("Interface erfolgreich geladen!")
+print("Drücke RightShift um Fenster zu verstecken/zeigen")
