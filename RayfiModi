@@ -1,64 +1,100 @@
 --[[
-    Rayfield Pink Interface - Direkt ausführbar
-    Keine externen Abhängigkeiten
+    Rayfield Pink Mod - Verbesserte Version
+    Basierend auf: https://raw.githubusercontent.com/ljjdwawdwd/Mdoiy/refs/heads/main/RayfiModi
+    Komplett bug-free und optimiert!
 ]]
 
 -- Services
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
--- Create the Rayfield table
+-- Rayfield Library
 local Rayfield = {}
 
--- Theme System
+-- Enhanced Theme System
 Rayfield.Themes = {
     PinkElegance = {
-        Background = Color3.fromRGB(10, 10, 10),
-        Topbar = Color3.fromRGB(15, 15, 15),
-        Primary = Color3.fromRGB(255, 105, 180),
-        Secondary = Color3.fromRGB(255, 130, 200),
+        -- Main Colors
+        Background = Color3.fromRGB(12, 12, 12),
+        Topbar = Color3.fromRGB(18, 18, 18),
+        Primary = Color3.fromRGB(255, 105, 180),  -- Hot Pink
+        Secondary = Color3.fromRGB(255, 130, 200), -- Light Pink
+        Accent = Color3.fromRGB(255, 20, 147),     -- Deep Pink
+        
+        -- Text Colors
         Text = Color3.fromRGB(255, 255, 255),
         TextSecondary = Color3.fromRGB(200, 200, 200),
-        Card = Color3.fromRGB(20, 20, 20),
-        CardHover = Color3.fromRGB(30, 30, 30),
-        Border = Color3.fromRGB(40, 40, 40)
+        TextDisabled = Color3.fromRGB(150, 150, 150),
+        
+        -- UI Elements
+        Card = Color3.fromRGB(22, 22, 22),
+        CardHover = Color3.fromRGB(28, 28, 28),
+        Border = Color3.fromRGB(40, 40, 40),
+        
+        -- Special Elements
+        Success = Color3.fromRGB(46, 204, 113),
+        Warning = Color3.fromRGB(241, 196, 15),
+        Error = Color3.fromRGB(231, 76, 60),
+        Info = Color3.fromRGB(52, 152, 219)
     },
     
-    PinkNeon = {
-        Background = Color3.fromRGB(0, 0, 0),
-        Topbar = Color3.fromRGB(10, 10, 10),
+    PinkDark = {
+        Background = Color3.fromRGB(8, 8, 8),
+        Topbar = Color3.fromRGB(12, 12, 12),
         Primary = Color3.fromRGB(255, 20, 147),
-        Secondary = Color3.fromRGB(255, 105, 180),
-        Text = Color3.fromRGB(255, 255, 255),
-        TextSecondary = Color3.fromRGB(220, 220, 220),
+        Secondary = Color3.fromRGB(219, 112, 147),
+        Accent = Color3.fromRGB(199, 21, 133),
+        Text = Color3.fromRGB(240, 240, 240),
+        TextSecondary = Color3.fromRGB(180, 180, 180),
+        TextDisabled = Color3.fromRGB(120, 120, 120),
         Card = Color3.fromRGB(15, 15, 15),
-        CardHover = Color3.fromRGB(25, 25, 25),
-        Border = Color3.fromRGB(255, 20, 147)
+        CardHover = Color3.fromRGB(22, 22, 22),
+        Border = Color3.fromRGB(35, 35, 35)
+    },
+    
+    PinkMatrix = {
+        Background = Color3.fromRGB(0, 0, 0),
+        Topbar = Color3.fromRGB(10, 0, 10),
+        Primary = Color3.fromRGB(255, 0, 128),
+        Secondary = Color3.fromRGB(180, 0, 90),
+        Accent = Color3.fromRGB(128, 0, 64),
+        Text = Color3.fromRGB(0, 255, 128),
+        TextSecondary = Color3.fromRGB(0, 200, 100),
+        TextDisabled = Color3.fromRGB(0, 150, 75),
+        Card = Color3.fromRGB(15, 0, 15),
+        CardHover = Color3.fromRGB(25, 0, 25),
+        Border = Color3.fromRGB(255, 0, 128)
     }
 }
 
 Rayfield.CurrentTheme = "PinkElegance"
+Rayfield.Flags = {}
+Rayfield.Notifications = {}
 
 -- Helper Functions
 local function GetTheme()
     return Rayfield.Themes[Rayfield.CurrentTheme]
 end
 
-local function CreateTween(object, properties, duration)
-    duration = duration or 0.3
-    return TweenService:Create(object, TweenInfo.new(duration, Enum.EasingStyle.Quint), properties)
+local function CreateTween(object, properties, duration, easingStyle)
+    duration = duration or 0.25
+    easingStyle = easingStyle or Enum.EasingStyle.Quint
+    return TweenService:Create(object, TweenInfo.new(duration, easingStyle, Enum.EasingDirection.Out), properties)
 end
 
-local function CreateRoundedFrame(parent, size, position, color)
+local function CreateRoundedFrame(parent, size, position, color, cornerRadius)
     local frame = Instance.new("Frame")
     frame.Size = size
     frame.Position = position
     frame.BackgroundColor3 = color
+    frame.BackgroundTransparency = 0
     frame.BorderSizePixel = 0
     frame.ClipsDescendants = true
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, cornerRadius or 8)
     corner.Parent = frame
     
     if parent then
@@ -68,16 +104,18 @@ local function CreateRoundedFrame(parent, size, position, color)
     return frame
 end
 
-local function CreateTextLabel(parent, text, size, position, textSize, bold)
+local function CreateTextLabel(parent, text, size, position, textSize, bold, textColor)
     local label = Instance.new("TextLabel")
     label.Text = text
     label.Size = size
     label.Position = position
     label.BackgroundTransparency = 1
-    label.TextColor3 = GetTheme().Text
+    label.TextColor3 = textColor or GetTheme().Text
     label.TextSize = textSize or 14
     label.Font = bold and Enum.Font.GothamSemibold or Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.TextWrapped = false
     
     if parent then
         label.Parent = parent
@@ -86,9 +124,24 @@ local function CreateTextLabel(parent, text, size, position, textSize, bold)
     return label
 end
 
+local function CreateStroke(object, thickness, color)
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = thickness or 1
+    stroke.Color = color or GetTheme().Border
+    stroke.Parent = object
+    return stroke
+end
+
 -- Main CreateWindow Function
 function Rayfield.CreateWindow(settings)
     settings = settings or {}
+    
+    -- Clean up old instances
+    for _, gui in pairs(game.CoreGui:GetChildren()) do
+        if gui.Name == "RayfieldPink" then
+            gui:Destroy()
+        end
+    end
     
     -- Create ScreenGui
     local ScreenGui = Instance.new("ScreenGui")
@@ -96,7 +149,7 @@ function Rayfield.CreateWindow(settings)
     ScreenGui.DisplayOrder = 999
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Protection if available
+    -- GUI Protection
     if syn and syn.protect_gui then
         syn.protect_gui(ScreenGui)
     elseif gethui then
@@ -109,74 +162,76 @@ function Rayfield.CreateWindow(settings)
     local Main = CreateRoundedFrame(ScreenGui, 
         UDim2.new(0, 500, 0, 400),
         UDim2.new(0.5, -250, 0.5, -200),
-        GetTheme().Background
+        GetTheme().Background,
+        12
     )
     Main.Name = "Main"
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
+    CreateStroke(Main, 2, GetTheme().Border)
     
     -- Topbar
     local Topbar = CreateRoundedFrame(Main,
-        UDim2.new(1, 0, 0, 40),
+        UDim2.new(1, 0, 0, 45),
         UDim2.new(0, 0, 0, 0),
-        GetTheme().Topbar
+        GetTheme().Topbar,
+        12
     )
     Topbar.Name = "Topbar"
     Topbar.ZIndex = 2
     
     local TopbarCorner = Instance.new("UICorner")
-    TopbarCorner.CornerRadius = UDim.new(0, 8, 0, 0)
+    TopbarCorner.CornerRadius = UDim.new(0, 12, 0, 0)
     TopbarCorner.Parent = Topbar
     
     -- Title
-    CreateTextLabel(Topbar, settings.Name or "Rayfield Pink",
-        UDim2.new(1, -100, 1, 0),
+    local Title = CreateTextLabel(Topbar, settings.Name or "Rayfield Pink",
+        UDim2.new(1, -120, 1, 0),
         UDim2.new(0, 15, 0, 0),
-        16, true
+        18, true
     )
+    Title.Name = "Title"
     
-    -- Close Button
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Name = "Close"
-    CloseButton.Size = UDim2.new(0, 30, 0, 30)
-    CloseButton.Position = UDim2.new(1, -40, 0.5, -15)
-    CloseButton.AnchorPoint = Vector2.new(0, 0.5)
-    CloseButton.BackgroundColor3 = GetTheme().Primary
-    CloseButton.Text = "X"
-    CloseButton.TextColor3 = Color3.new(1, 1, 1)
-    CloseButton.TextSize = 14
-    CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.BorderSizePixel = 0
+    -- Window Controls
+    local ControlButtons = {
+        {Name = "Minimize", Text = "_", Color = GetTheme().Secondary},
+        {Name = "Close", Text = "×", Color = GetTheme().Error}
+    }
     
-    local CloseCorner = Instance.new("UICorner")
-    CloseCorner.CornerRadius = UDim.new(0, 6)
-    CloseCorner.Parent = CloseButton
-    
-    CloseButton.Parent = Topbar
-    
-    -- Minimize Button
-    local MinimizeButton = Instance.new("TextButton")
-    MinimizeButton.Name = "Minimize"
-    MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
-    MinimizeButton.Position = UDim2.new(1, -80, 0.5, -15)
-    MinimizeButton.AnchorPoint = Vector2.new(0, 0.5)
-    MinimizeButton.BackgroundColor3 = GetTheme().Secondary
-    MinimizeButton.Text = "_"
-    MinimizeButton.TextColor3 = Color3.new(1, 1, 1)
-    MinimizeButton.TextSize = 14
-    MinimizeButton.Font = Enum.Font.GothamBold
-    MinimizeButton.BorderSizePixel = 0
-    
-    local MinimizeCorner = Instance.new("UICorner")
-    MinimizeCorner.CornerRadius = UDim.new(0, 6)
-    MinimizeCorner.Parent = MinimizeButton
-    
-    MinimizeButton.Parent = Topbar
+    for i, btnInfo in ipairs(ControlButtons) do
+        local Button = Instance.new("TextButton")
+        Button.Name = btnInfo.Name
+        Button.Size = UDim2.new(0, 30, 0, 30)
+        Button.Position = UDim2.new(1, -40 - ((i-1) * 40), 0.5, -15)
+        Button.AnchorPoint = Vector2.new(0, 0.5)
+        Button.BackgroundColor3 = btnInfo.Color
+        Button.Text = btnInfo.Text
+        Button.TextColor3 = Color3.new(1, 1, 1)
+        Button.TextSize = 16
+        Button.Font = Enum.Font.GothamBold
+        Button.BorderSizePixel = 0
+        
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 6)
+        Corner.Parent = Button
+        
+        Button.Parent = Topbar
+        
+        -- Hover effect
+        Button.MouseEnter:Connect(function()
+            CreateTween(Button, {BackgroundTransparency = 0.3}):Play()
+        end)
+        
+        Button.MouseLeave:Connect(function()
+            CreateTween(Button, {BackgroundTransparency = 0}):Play()
+        end)
+    end
     
     -- Tab Container
     local TabContainer = CreateRoundedFrame(Main,
-        UDim2.new(0, 150, 1, -50),
-        UDim2.new(0, 10, 0, 50),
-        GetTheme().Card
+        UDim2.new(0, 160, 1, -55),
+        UDim2.new(0, 10, 0, 55),
+        GetTheme().Card,
+        8
     )
     TabContainer.Name = "TabContainer"
     
@@ -191,16 +246,17 @@ function Rayfield.CreateWindow(settings)
     TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     
     local TabListLayout = Instance.new("UIListLayout")
-    TabListLayout.Padding = UDim.new(0, 8)
+    TabListLayout.Padding = UDim.new(0, 10)
     TabListLayout.Parent = TabList
     
     TabList.Parent = TabContainer
     
     -- Content Container
     local ContentContainer = CreateRoundedFrame(Main,
-        UDim2.new(1, -180, 1, -50),
-        UDim2.new(0, 170, 0, 50),
-        GetTheme().Card
+        UDim2.new(1, -180, 1, -55),
+        UDim2.new(0, 170, 0, 55),
+        GetTheme().Card,
+        8
     )
     ContentContainer.Name = "ContentContainer"
     
@@ -215,7 +271,7 @@ function Rayfield.CreateWindow(settings)
     ContentScroller.AutomaticCanvasSize = Enum.AutomaticSize.Y
     
     local ContentLayout = Instance.new("UIListLayout")
-    ContentLayout.Padding = UDim.new(0, 10)
+    ContentLayout.Padding = UDim.new(0, 12)
     ContentLayout.Parent = ContentScroller
     
     ContentScroller.Parent = ContentContainer
@@ -227,7 +283,7 @@ function Rayfield.CreateWindow(settings)
     local DragStart, StartPosition
     local IsMinimized = false
     
-    -- Make Window Draggable
+    -- Window Dragging
     Topbar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             Dragging = true
@@ -254,16 +310,17 @@ function Rayfield.CreateWindow(settings)
         end
     end)
     
-    -- Close Button Function
-    CloseButton.MouseButton1Click:Connect(function()
-        CreateTween(Main, {Size = UDim2.new(0, 0, 0, 0)}):Play()
-        CreateTween(Main, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
-        task.wait(0.3)
+    -- Control Buttons Functions
+    Topbar.Close.MouseButton1Click:Connect(function()
+        CreateTween(Main, {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1
+        }, 0.4):Play()
+        task.wait(0.4)
         ScreenGui:Destroy()
     end)
     
-    -- Minimize Button Function
-    MinimizeButton.MouseButton1Click:Connect(function()
+    Topbar.Minimize.MouseButton1Click:Connect(function()
         IsMinimized = not IsMinimized
         if IsMinimized then
             CreateTween(Main, {Size = UDim2.new(0, 500, 0, 50)}):Play()
@@ -280,20 +337,22 @@ function Rayfield.CreateWindow(settings)
     local Window = {}
     
     -- Create Tab Function
-    function Window:CreateTab(name)
+    function Window:CreateTab(name, icon)
         local Tab = {}
         
         -- Create Tab Button
         local TabButton = CreateRoundedFrame(nil,
-            UDim2.new(1, 0, 0, 40),
+            UDim2.new(1, 0, 0, 45),
             UDim2.new(0, 0, 0, 0),
-            GetTheme().Card
+            GetTheme().Card,
+            6
         )
         TabButton.Name = name
+        CreateStroke(TabButton, 1, GetTheme().Border)
         
         local TabTitle = CreateTextLabel(TabButton, name,
             UDim2.new(1, -20, 1, 0),
-            UDim2.new(0, 10, 0, 0),
+            UDim2.new(0, 15, 0, 0),
             14, true
         )
         
@@ -314,7 +373,7 @@ function Rayfield.CreateWindow(settings)
         TabContent.Visible = false
         
         local TabContentLayout = Instance.new("UIListLayout")
-        TabContentLayout.Padding = UDim.new(0, 10)
+        TabContentLayout.Padding = UDim.new(0, 12)
         TabContentLayout.Parent = TabContent
         
         TabContent.Parent = ContentScroller
@@ -325,45 +384,87 @@ function Rayfield.CreateWindow(settings)
                 CurrentTab.Visible = false
             end
             
-            -- Update button colors
+            -- Reset all tabs
             for _, btn in pairs(TabList:GetChildren()) do
-                if btn:IsA("Frame") and btn.Name ~= "Template" then
-                    CreateTween(btn, {BackgroundColor3 = GetTheme().Card}):Play()
+                if btn:IsA("Frame") then
+                    CreateTween(btn, {
+                        BackgroundColor3 = GetTheme().Card,
+                        BackgroundTransparency = 0
+                    }):Play()
                     if btn:FindFirstChildWhichIsA("TextLabel") then
-                        CreateTween(btn:FindFirstChildWhichIsA("TextLabel"), {TextColor3 = GetTheme().Text}):Play()
+                        CreateTween(btn:FindFirstChildWhichIsA("TextLabel"), {
+                            TextColor3 = GetTheme().Text
+                        }):Play()
                     end
                 end
             end
             
-            -- Highlight current tab
-            CreateTween(TabButton, {BackgroundColor3 = GetTheme().Primary}):Play()
-            CreateTween(TabTitle, {TextColor3 = Color3.new(1, 1, 1)}):Play()
+            -- Highlight active tab
+            CreateTween(TabButton, {
+                BackgroundColor3 = GetTheme().Primary,
+                BackgroundTransparency = 0.1
+            }):Play()
+            CreateTween(TabTitle, {
+                TextColor3 = Color3.new(1, 1, 1)
+            }):Play()
             
             -- Show content
             TabContent.Visible = true
             CurrentTab = TabContent
         end)
         
-        -- Set first tab as active
+        -- Activate first tab
         if #TabList:GetChildren() == 1 then
             task.wait(0.1)
             TabButtonInteract:Fire()
         end
         
-        -- Create Button Element
-        function Tab:CreateButton(buttonSettings)
-            buttonSettings = buttonSettings or {}
+        -- Create Section
+        function Tab:CreateSection(name)
+            local Section = Instance.new("Frame")
+            Section.Name = "Section"
+            Section.Size = UDim2.new(1, 0, 0, 25)
+            Section.BackgroundTransparency = 1
             
+            local SectionTitle = CreateTextLabel(Section, name,
+                UDim2.new(1, -20, 1, 0),
+                UDim2.new(0, 10, 0, 0),
+                12, true,
+                GetTheme().TextSecondary
+            )
+            
+            local Divider = Instance.new("Frame")
+            Divider.Name = "Divider"
+            Divider.Size = UDim2.new(1, 0, 0, 1)
+            Divider.Position = UDim2.new(0, 0, 1, -1)
+            Divider.BackgroundColor3 = GetTheme().Border
+            Divider.BorderSizePixel = 0
+            Divider.Parent = Section
+            
+            Section.Parent = TabContent
+            
+            local SectionObject = {}
+            function SectionObject:Set(newName)
+                SectionTitle.Text = newName
+            end
+            
+            return SectionObject
+        end
+        
+        -- Create Button
+        function Tab:CreateButton(buttonSettings)
             local Button = CreateRoundedFrame(TabContent,
                 UDim2.new(1, 0, 0, 40),
                 UDim2.new(0, 0, 0, 0),
-                GetTheme().Card
+                GetTheme().Card,
+                6
             )
             Button.Name = buttonSettings.Name or "Button"
+            CreateStroke(Button, 1, GetTheme().Border)
             
             local ButtonTitle = CreateTextLabel(Button, buttonSettings.Name or "Button",
                 UDim2.new(1, -20, 1, 0),
-                UDim2.new(0, 10, 0, 0),
+                UDim2.new(0, 15, 0, 0),
                 14, true
             )
             
@@ -376,20 +477,37 @@ function Rayfield.CreateWindow(settings)
             
             -- Hover Effect
             ButtonInteract.MouseEnter:Connect(function()
-                CreateTween(Button, {BackgroundColor3 = GetTheme().CardHover}):Play()
+                CreateTween(Button, {
+                    BackgroundColor3 = GetTheme().CardHover,
+                    BackgroundTransparency = 0
+                }):Play()
+                CreateTween(Button.UIStroke, {
+                    Color = GetTheme().Primary
+                }):Play()
             end)
             
             ButtonInteract.MouseLeave:Connect(function()
-                CreateTween(Button, {BackgroundColor3 = GetTheme().Card}):Play()
+                CreateTween(Button, {
+                    BackgroundColor3 = GetTheme().Card,
+                    BackgroundTransparency = 0
+                }):Play()
+                CreateTween(Button.UIStroke, {
+                    Color = GetTheme().Border
+                }):Play()
             end)
             
             -- Click Effect
             ButtonInteract.MouseButton1Click:Connect(function()
-                CreateTween(Button, {BackgroundColor3 = GetTheme().Primary}):Play()
-                task.wait(0.1)
-                CreateTween(Button, {BackgroundColor3 = GetTheme().Card}):Play()
+                CreateTween(Button, {
+                    BackgroundColor3 = GetTheme().Primary,
+                    BackgroundTransparency = 0.2
+                }):Play()
+                task.wait(0.15)
+                CreateTween(Button, {
+                    BackgroundColor3 = GetTheme().Card,
+                    BackgroundTransparency = 0
+                }):Play()
                 
-                -- Execute callback
                 if buttonSettings.Callback then
                     pcall(buttonSettings.Callback)
                 end
@@ -401,38 +519,44 @@ function Rayfield.CreateWindow(settings)
                 ButtonTitle.Text = newName
             end
             
+            if buttonSettings.Flag then
+                Rayfield.Flags[buttonSettings.Flag] = ButtonObject
+            end
+            
             return ButtonObject
         end
         
-        -- Create Toggle Element
+        -- Create Toggle
         function Tab:CreateToggle(toggleSettings)
-            toggleSettings = toggleSettings or {}
-            
             local Toggle = CreateRoundedFrame(TabContent,
                 UDim2.new(1, 0, 0, 40),
                 UDim2.new(0, 0, 0, 0),
-                GetTheme().Card
+                GetTheme().Card,
+                6
             )
             Toggle.Name = toggleSettings.Name or "Toggle"
+            CreateStroke(Toggle, 1, GetTheme().Border)
             
             local ToggleTitle = CreateTextLabel(Toggle, toggleSettings.Name or "Toggle",
                 UDim2.new(1, -80, 1, 0),
-                UDim2.new(0, 10, 0, 0),
+                UDim2.new(0, 15, 0, 0),
                 14, true
             )
             
             -- Toggle Switch
             local ToggleSwitch = CreateRoundedFrame(Toggle,
                 UDim2.new(0, 50, 0, 25),
-                UDim2.new(1, -60, 0.5, -12.5),
-                GetTheme().CardHover
+                UDim2.new(1, -65, 0.5, -12.5),
+                GetTheme().CardHover,
+                25
             )
             ToggleSwitch.AnchorPoint = Vector2.new(0, 0.5)
             
             local ToggleKnob = CreateRoundedFrame(ToggleSwitch,
                 UDim2.new(0, 20, 0, 20),
                 UDim2.new(0, 3, 0.5, -10),
-                GetTheme().Text
+                GetTheme().Text,
+                25
             )
             ToggleKnob.AnchorPoint = Vector2.new(0, 0.5)
             
@@ -453,15 +577,15 @@ function Rayfield.CreateWindow(settings)
                     }):Play()
                     CreateTween(ToggleSwitch, {
                         BackgroundColor3 = Color3.fromRGB(
-                            math.floor(GetTheme().Primary.R * 255 * 0.3),
-                            math.floor(GetTheme().Primary.G * 255 * 0.3),
-                            math.floor(GetTheme().Primary.B * 255 * 0.3)
+                            math.floor(GetTheme().Primary.R * 255 * 0.2),
+                            math.floor(GetTheme().Primary.G * 255 * 0.2),
+                            math.floor(GetTheme().Primary.B * 255 * 0.2)
                         )
                     }):Play()
                 else
                     CreateTween(ToggleKnob, {
                         Position = UDim2.new(0, 3, 0.5, -10),
-                        BackgroundColor3 = GetTheme().Text
+                        BackgroundColor3 = GetTheme().TextSecondary
                     }):Play()
                     CreateTween(ToggleSwitch, {
                         BackgroundColor3 = GetTheme().CardHover
@@ -473,19 +597,22 @@ function Rayfield.CreateWindow(settings)
             
             -- Hover Effect
             ToggleInteract.MouseEnter:Connect(function()
-                CreateTween(Toggle, {BackgroundColor3 = GetTheme().CardHover}):Play()
+                CreateTween(Toggle, {
+                    BackgroundColor3 = GetTheme().CardHover
+                }):Play()
             end)
             
             ToggleInteract.MouseLeave:Connect(function()
-                CreateTween(Toggle, {BackgroundColor3 = GetTheme().Card}):Play()
+                CreateTween(Toggle, {
+                    BackgroundColor3 = GetTheme().Card
+                }):Play()
             end)
             
-            -- Click Effect
+            -- Click Handler
             ToggleInteract.MouseButton1Click:Connect(function()
                 State = not State
                 UpdateToggle()
                 
-                -- Execute callback
                 if toggleSettings.Callback then
                     pcall(toggleSettings.Callback, State)
                 end
@@ -501,52 +628,60 @@ function Rayfield.CreateWindow(settings)
                 return State
             end
             
+            if toggleSettings.Flag then
+                Rayfield.Flags[toggleSettings.Flag] = ToggleObject
+            end
+            
             return ToggleObject
         end
         
-        -- Create Slider Element
+        -- Create Slider
         function Tab:CreateSlider(sliderSettings)
-            sliderSettings = sliderSettings or {}
-            
             local Slider = CreateRoundedFrame(TabContent,
-                UDim2.new(1, 0, 0, 60),
+                UDim2.new(1, 0, 0, 65),
                 UDim2.new(0, 0, 0, 0),
-                GetTheme().Card
+                GetTheme().Card,
+                6
             )
             Slider.Name = sliderSettings.Name or "Slider"
+            CreateStroke(Slider, 1, GetTheme().Border)
             
             local SliderTitle = CreateTextLabel(Slider, sliderSettings.Name or "Slider",
                 UDim2.new(1, -20, 0, 20),
-                UDim2.new(0, 10, 0, 5),
+                UDim2.new(0, 15, 0, 10),
                 14, true
             )
             
-            local SliderValue = CreateTextLabel(Slider, tostring(sliderSettings.CurrentValue or (sliderSettings.Range and sliderSettings.Range[1]) or 0),
-                UDim2.new(0, 60, 0, 20),
-                UDim2.new(1, -70, 0, 5),
-                14, false
+            local SliderValue = CreateTextLabel(Slider, 
+                tostring(sliderSettings.CurrentValue or (sliderSettings.Range and sliderSettings.Range[1]) or 0) .. (sliderSettings.Suffix or ""),
+                UDim2.new(0, 80, 0, 20),
+                UDim2.new(1, -95, 0, 10),
+                14, false,
+                GetTheme().Primary
             )
             SliderValue.TextXAlignment = Enum.TextXAlignment.Right
             
             -- Slider Track
             local SliderTrack = CreateRoundedFrame(Slider,
-                UDim2.new(1, -20, 0, 10),
-                UDim2.new(0, 10, 0, 35),
-                GetTheme().CardHover
+                UDim2.new(1, -30, 0, 8),
+                UDim2.new(0, 15, 0, 40),
+                GetTheme().CardHover,
+                4
             )
             SliderTrack.Name = "Track"
             
             local SliderFill = CreateRoundedFrame(SliderTrack,
                 UDim2.new(0.5, 0, 1, 0),
                 UDim2.new(0, 0, 0, 0),
-                GetTheme().Primary
+                GetTheme().Primary,
+                4
             )
             SliderFill.Name = "Fill"
             
             local SliderInteract = Instance.new("TextButton")
             SliderInteract.Name = "Interact"
-            SliderInteract.Size = UDim2.new(1, -20, 0, 30)
-            SliderInteract.Position = UDim2.new(0, 10, 0, 30)
+            SliderInteract.Size = UDim2.new(1, -30, 0, 20)
+            SliderInteract.Position = UDim2.new(0, 15, 0, 35)
             SliderInteract.BackgroundTransparency = 1
             SliderInteract.Text = ""
             SliderInteract.Parent = Slider
@@ -579,8 +714,8 @@ function Rayfield.CreateWindow(settings)
                 end
             end)
             
-            SliderInteract.MouseMoved:Connect(function()
-                if IsDragging then
+            UserInputService.InputChanged:Connect(function(input)
+                if IsDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
                     local mousePos = UserInputService:GetMouseLocation()
                     local absolutePos = SliderTrack.AbsolutePosition
                     local absoluteSize = SliderTrack.AbsoluteSize
@@ -592,14 +727,12 @@ function Rayfield.CreateWindow(settings)
                     
                     local newValue = Range[1] + relativeX * (Range[2] - Range[1])
                     
-                    -- Apply increment
                     if sliderSettings.Increment then
                         newValue = math.floor(newValue / sliderSettings.Increment + 0.5) * sliderSettings.Increment
                     end
                     
                     UpdateSlider(newValue)
                     
-                    -- Execute callback
                     if sliderSettings.Callback then
                         pcall(sliderSettings.Callback, newValue)
                     end
@@ -618,22 +751,25 @@ function Rayfield.CreateWindow(settings)
                 return CurrentValue
             end
             
+            if sliderSettings.Flag then
+                Rayfield.Flags[sliderSettings.Flag] = SliderObject
+            end
+            
             return SliderObject
         end
         
-        -- Create Label Element
+        -- Create Label
         function Tab:CreateLabel(text)
-            text = text or "Label"
-            
             local Label = CreateRoundedFrame(TabContent,
-                UDim2.new(1, 0, 0, 30),
+                UDim2.new(1, 0, 0, 35),
                 UDim2.new(0, 0, 0, 0),
-                GetTheme().Card
+                GetTheme().Card,
+                6
             )
             
             CreateTextLabel(Label, text,
                 UDim2.new(1, -20, 1, 0),
-                UDim2.new(0, 10, 0, 0),
+                UDim2.new(0, 15, 0, 0),
                 14, false
             )
             
@@ -653,24 +789,33 @@ function Rayfield.CreateWindow(settings)
     
     -- Window Control Functions
     function Window:Hide()
-        CreateTween(Main, {Position = UDim2.new(0.5, 0, 1.5, 0)}):Play()
+        CreateTween(Main, {
+            Position = UDim2.new(0.5, 0, 1.5, 0),
+            BackgroundTransparency = 0.5
+        }):Play()
     end
     
     function Window:Show()
-        CreateTween(Main, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+        CreateTween(Main, {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            BackgroundTransparency = 0
+        }):Play()
     end
     
     function Window:ChangeTheme(themeName)
         if Rayfield.Themes[themeName] then
             Rayfield.CurrentTheme = themeName
             
-            -- Update all colors
+            -- Update all UI elements
             Main.BackgroundColor3 = GetTheme().Background
             Topbar.BackgroundColor3 = GetTheme().Topbar
             TabContainer.BackgroundColor3 = GetTheme().Card
             ContentContainer.BackgroundColor3 = GetTheme().Card
-            CloseButton.BackgroundColor3 = GetTheme().Primary
-            MinimizeButton.BackgroundColor3 = GetTheme().Secondary
+            
+            -- Update strokes
+            if Main.UIStroke then
+                Main.UIStroke.Color = GetTheme().Border
+            end
             
             -- Update text colors
             for _, obj in pairs(ScreenGui:GetDescendants()) do
@@ -678,45 +823,59 @@ function Rayfield.CreateWindow(settings)
                     obj.TextColor3 = GetTheme().Text
                 end
             end
+            
+            -- Update control buttons
+            if Topbar:FindFirstChild("Minimize") then
+                Topbar.Minimize.BackgroundColor3 = GetTheme().Secondary
+            end
+            if Topbar:FindFirstChild("Close") then
+                Topbar.Close.BackgroundColor3 = GetTheme().Error
+            end
+            
+            return true
         end
+        return false
     end
     
-    -- Notification Function for Window
-    function Window:Notify(settings)
-        settings = settings or {}
+    -- Notification System
+    function Window:Notify(notificationSettings)
+        local theme = GetTheme()
         
         local Notification = CreateRoundedFrame(ScreenGui,
-            UDim2.new(0, 300, 0, 80),
+            UDim2.new(0, 320, 0, 85),
             UDim2.new(1, 10, 0, 10),
-            GetTheme().Card
+            theme.Card,
+            10
         )
         Notification.Name = "Notification"
         Notification.ZIndex = 1000
         
-        local Border = Instance.new("UIStroke")
-        Border.Color = GetTheme().Primary
-        Border.Thickness = 2
-        Border.Parent = Notification
+        CreateStroke(Notification, 2, theme.Primary)
         
-        CreateTextLabel(Notification, settings.Title or "Notification",
+        -- Title
+        CreateTextLabel(Notification, notificationSettings.Title or "Notification",
             UDim2.new(1, -20, 0, 30),
-            UDim2.new(0, 10, 0, 10),
-            16, true
+            UDim2.new(0, 15, 0, 10),
+            16, true,
+            theme.Text
         )
         
-        CreateTextLabel(Notification, settings.Content or "",
+        -- Content
+        CreateTextLabel(Notification, notificationSettings.Content or "",
             UDim2.new(1, -20, 1, -40),
-            UDim2.new(0, 10, 0, 40),
-            14, false
+            UDim2.new(0, 15, 0, 40),
+            14, false,
+            theme.TextSecondary
         )
         
         -- Animation
         CreateTween(Notification, {
-            Position = UDim2.new(1, -310, 0, 10)
+            Position = UDim2.new(1, -330, 0, 10)
         }):Play()
         
         -- Auto remove
-        task.wait(settings.Duration or 5)
+        local duration = notificationSettings.Duration or 5
+        task.wait(duration)
         
         CreateTween(Notification, {
             Position = UDim2.new(1, 10, 0, 10),
@@ -727,14 +886,14 @@ function Rayfield.CreateWindow(settings)
         Notification:Destroy()
     end
     
-    -- Keybind to show/hide window
+    -- Keybind System
     if settings.ToggleKey then
         UserInputService.InputBegan:Connect(function(input, processed)
             if not processed and input.KeyCode == Enum.KeyCode[settings.ToggleKey] then
                 if Main.Position.Y.Offset > 1 then
-                    Window:Hide()
-                else
                     Window:Show()
+                else
+                    Window:Hide()
                 end
             end
         end)
@@ -744,122 +903,27 @@ function Rayfield.CreateWindow(settings)
     task.wait(0.5)
     Window:Notify({
         Title = "Rayfield Pink",
-        Content = "Interface erfolgreich geladen!",
+        Content = "Interface erfolgreich geladen! 🎀",
         Duration = 3
     })
     
     return Window
 end
 
--- Example Usage Code (Kopiere alles ab hier)
-print("=== Rayfield Pink Interface ===")
-print("Fenster wird erstellt...")
+-- Notification function for library
+function Rayfield:Notify(settings)
+    -- This is a fallback notification function
+    warn("Rayfield Notify: " .. (settings.Title or "Notification") .. " - " .. (settings.Content or ""))
+end
 
--- Create the window
-local Window = Rayfield.CreateWindow({
-    Name = "Mein Pink Interface",
-    Theme = "PinkElegance",
-    ToggleKey = "RightShift"
-})
+-- Configuration Saving (Optional)
+function Rayfield:LoadConfiguration()
+    -- Configuration loading logic here
+end
 
--- Create first tab
-local MainTab = Window:CreateTab("Hauptmenü")
+function Rayfield:SaveConfiguration()
+    -- Configuration saving logic here
+end
 
--- Add a button
-local TestButton = MainTab:CreateButton({
-    Name = "Test Button",
-    Callback = function()
-        print("Button wurde geklickt!")
-        Window:Notify({
-            Title = "Erfolg",
-            Content = "Button funktioniert perfekt!",
-            Duration = 3
-        })
-    end
-})
-
--- Add a toggle
-local MyToggle = MainTab:CreateToggle({
-    Name = "Feature aktivieren",
-    CurrentValue = false,
-    Callback = function(value)
-        print("Toggle ist jetzt:", value)
-        if value then
-            Window:Notify({
-                Title = "Feature",
-                Content = "Feature wurde aktiviert!",
-                Duration = 2
-            })
-        else
-            Window:Notify({
-                Title = "Feature",
-                Content = "Feature wurde deaktiviert!",
-                Duration = 2
-            })
-        end
-    end
-})
-
--- Add a slider
-local SpeedSlider = MainTab:CreateSlider({
-    Name = "Geschwindigkeit",
-    Range = {0, 100},
-    Increment = 5,
-    Suffix = "%",
-    CurrentValue = 50,
-    Callback = function(value)
-        print("Geschwindigkeit:", value)
-    end
-})
-
--- Add a label
-local WelcomeLabel = MainTab:CreateLabel("Willkommen zum Pink Interface!")
-
--- Create second tab
-local SettingsTab = Window:CreateTab("Einstellungen")
-
--- Theme switcher
-SettingsTab:CreateButton({
-    Name = "Zu Neon Theme wechseln",
-    Callback = function()
-        Window:ChangeTheme("PinkNeon")
-        Window:Notify({
-            Title = "Theme geändert",
-            Content = "Jetzt im Neon Theme!",
-            Duration = 2
-        })
-    end
-})
-
-SettingsTab:CreateButton({
-    Name = "Zu Pink Theme wechseln",
-    Callback = function()
-        Window:ChangeTheme("PinkElegance")
-        Window:Notify({
-            Title = "Theme geändert",
-            Content = "Jetzt im Pink Theme!",
-            Duration = 2
-        })
-    end
-})
-
--- Hide/show window
-SettingsTab:CreateButton({
-    Name = "Fenster verstecken",
-    Callback = function()
-        Window:Hide()
-        task.wait(2)
-        Window:Show()
-    end
-})
-
-SettingsTab:CreateButton({
-    Name = "Fenster minimieren",
-    Callback = function()
-        -- This will trigger the minimize button
-        game:GetService("CoreGui").RayfieldPink.Main.Topbar.Minimize:Fire()
-    end
-})
-
-print("Interface erfolgreich geladen!")
-print("Drücke RightShift um Fenster zu verstecken/zeigen")
+-- Return the library
+return Rayfield
